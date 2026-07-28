@@ -2,12 +2,13 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-
+from .routers import user
 from .database import get_db
 
 
 app = FastAPI()
 
+app.include_router(user.router)
 
 @app.get("/")
 def root(database: Session = Depends(get_db)):
