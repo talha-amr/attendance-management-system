@@ -5,6 +5,7 @@ from ..schemas import UserCreate,UserResponse
 from .. import security
 router = APIRouter(prefix='/user')
 from .. import models
+from .. dependencies import get_current_user
 
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=UserResponse)
@@ -21,3 +22,6 @@ def signup(payload: UserCreate ,db:Session=Depends(get_db)):
         return new_user
     raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User Email is already Registered")
 
+@router.get("/me", response_model=UserResponse)
+def get_current_user_details( current_user = Depends(get_current_user)):
+    return current_user

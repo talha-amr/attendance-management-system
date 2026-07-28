@@ -26,3 +26,12 @@ class TokenResponse(BaseModel):
 
 class TokenData(BaseModel):
     user_id: int
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
