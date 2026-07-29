@@ -1,7 +1,7 @@
 from pydantic import BaseModel,EmailStr
 from .enums import UserRoles
 from datetime import datetime
-
+from typing import Optional
 class UserCreate(BaseModel):
     name:str
     email:EmailStr
@@ -35,3 +35,11 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class ForgotTokenData(BaseModel):
+    user_id:int
+    token_hash:str
+    expires_at:datetime
+    used_at: Optional[datetime]
+    
+    
