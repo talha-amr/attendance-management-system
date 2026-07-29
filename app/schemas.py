@@ -1,11 +1,24 @@
 from pydantic import BaseModel,EmailStr
 from .enums import UserRoles
 from datetime import datetime
-from typing import Optional
+from typing import Optional,Annotated
+from pydantic import AfterValidator,Field
+
+
+def validate_password(value:str)->str:
+    if not any(character.islower() for character in value):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not any(character.isupper() for character in value):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not any(not character.isalnum() and not character.isspace() for character in value):
+        raise ValueError("Password must contain at least one special character")
+    return value
+
+PlainPassword=Annotated[str,Field(min_length=8,max_length=128),AfterValidator(validate_password)]
 class UserCreate(BaseModel):
     name:str
     email:EmailStr
-    password:str
+    password:PlainPassword
 
 class UserResponse(BaseModel):
     email:EmailStr
@@ -34,12 +47,8 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str
+    new_password: PlainPassword
 
-class ForgotTokenData(BaseModel):
-    user_id:int
-    token_hash:str
-    expires_at:datetime
-    used_at: Optional[datetime]
+
     
     

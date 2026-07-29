@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .. import models,security
 from datetime import datetime,timedelta,timezone
 from ..config import settings
+from app.services.email_service import send_password_reset_email
 
 
 router=APIRouter(prefix='/auth')
@@ -69,7 +70,7 @@ def forgot_password(payload: ForgotPasswordRequest,db: Session = Depends(get_db)
 
     db.commit()
 
-    print(f"DEV PASSWORD RESET TOKEN: {raw_token}")
+    send_password_reset_email(user.email,raw_token)
 
     return response
 
@@ -86,8 +87,9 @@ def reset_password(payload:ResetPasswordRequest,db:Session=Depends(get_db)):
     user=db.query(models.User).filter(models.User.id==record.user_id).first()
 
     if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid or expired reset token")
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid User")
+    if security.verify_password(payload.new_password,user.password):
+        raise   HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Cant add the same Password")
     user.password=security.hash_password(payload.new_password)
     record.used_at=current_time
 

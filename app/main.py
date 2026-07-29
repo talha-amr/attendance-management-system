@@ -4,9 +4,19 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from .routers import user,auth
 from .database import get_db
+from app.services.email_service import send_email
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(user.router)
 app.include_router(auth.router)
@@ -27,3 +37,7 @@ def root(database: Session = Depends(get_db)):
             detail="Database connection failed",
         ) from error
 
+@app.post('/test-email')
+def test_email():
+    send_email("student1@example.com","SMTP Test","Mailtrap SMTP is working successfully.")
+    return {"message":"Test email sent successfully"}
