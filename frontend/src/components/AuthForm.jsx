@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+
 export default function AuthForm() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
@@ -258,6 +261,7 @@ export default function AuthForm() {
             {isLogin && (
               <div className="flex justify-end">
                 <button
+                  onClick={() => router.push("/forgot-password")}
                   type="button"
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                 >
