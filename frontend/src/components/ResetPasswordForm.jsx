@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function ResetPasswordForm() {
+  const urlData=  useSearchParams()
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
@@ -42,13 +43,12 @@ export default function ResetPasswordForm() {
 
     try {
       setLoading(true);
-      const urlData=  useSearchParams()
-      url_Token=urlData.get("token")
+      const url_Token=urlData.get("token")
       const resetPass= {
         "token": url_Token,
         "new_password": formData.password
       }
-      const response= await fetch("http://127.0.0.1:8000/auth/forgot-password",{
+      const response= await fetch("http://127.0.0.1:8000/auth/reset-password",{
         method:"POST",
         headers:{
             "content-type":"application/json"
@@ -57,21 +57,10 @@ export default function ResetPasswordForm() {
       })
       const data= await response.json()
       if (response.ok)
-        setMessage(data.detail)
-    else:
-      /*
-        ADD RESET PASSWORD LOGIC HERE
+        setMessage(data.message)
+      else
+        setError(data.detail)
 
-        Flow:
-        1. Get token from URL
-        2. Create reset request data
-        3. Send POST request to backend
-        4. Parse response.json()
-        5. Check response.ok
-        6. Success -> setMessage(...)
-        7. Error -> setError(...)
-        8. Later redirect to /auth
-      */
 
       console.log("Reset password submitted");
 
