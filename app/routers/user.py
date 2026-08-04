@@ -6,7 +6,7 @@ from .. import security
 router = APIRouter(prefix='/user')
 from .. import models
 from .. dependencies import get_current_user
-
+from ..dependencies import require_admin
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=UserResponse)
 def signup(payload: UserCreate ,db:Session=Depends(get_db)):
@@ -25,3 +25,8 @@ def signup(payload: UserCreate ,db:Session=Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_current_user_details( current_user = Depends(get_current_user)):
     return current_user
+
+@router.post('/admin/test')
+def admin_test(current_user = Depends(require_admin)):
+    return current_user
+    

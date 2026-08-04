@@ -67,6 +67,7 @@ export default function AuthForm() {
         {
           localStorage.setItem("access_token", data.access_token)
           setMessage("Logged In Successfully")
+          router.push("/dashboard")
         }
 
         else

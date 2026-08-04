@@ -24,7 +24,7 @@ def send_password_reset_email(recipient_email:str,reset_token:str)->None:
     Use this link to reset your password:
     {reset_link}
 
-    This link will expire in 30 minutes.
+    This link will expire in {settings.forgot_token_expire_minutes} minutes.
 
     If you did not request this, ignore this email."""
     send_email(recipient_email,subject,body)
