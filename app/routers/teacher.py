@@ -1,10 +1,10 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session
-from ..schemas import TeacherCreate,UserResponse
+from ..schemas import TeacherCreate,UserResponse,TeacherResponse
 from .. import security
 from .. import models
-from .. dependencies import get_current_user
+from .. dependencies import require_approved_teacher,require_teacher_profile
 from .. enums import UserRoles
 router=APIRouter(prefix='/teachers')
 
@@ -24,3 +24,13 @@ def teacher_signup(payload :TeacherCreate,db:Session=Depends(get_db)):
         db.commit()
         return new_user
     raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User with this email is already registered")
+
+
+@router.get('/test-access',response_model=TeacherResponse)
+def get_approved_teacher(approved=Depends(require_approved_teacher)):
+    return approved
+
+@router.get('/me',response_model=TeacherResponse)
+def get_current_teacher(teacher=Depends(require_teacher_profile)):
+    return teacher
+    
