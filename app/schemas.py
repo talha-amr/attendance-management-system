@@ -1,5 +1,5 @@
 from pydantic import BaseModel,EmailStr
-from .enums import UserRoles
+from .enums import UserRoles,TeacherApprovalStatus
 from datetime import datetime
 from typing import Optional,Annotated
 from pydantic import AfterValidator,Field
@@ -50,5 +50,15 @@ class ResetPasswordRequest(BaseModel):
     new_password: PlainPassword
 
 
-    
-    
+class TeacherCreate(BaseModel):
+    name:str
+    email:EmailStr
+    password:PlainPassword
+
+class TeacherResponse(BaseModel):
+    id: int
+    user_id:int
+    created_at:datetime
+    approval_status:TeacherApprovalStatus
+    user:UserResponse
+    model_config = {"from_attributes": True}

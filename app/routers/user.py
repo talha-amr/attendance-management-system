@@ -3,10 +3,10 @@ from ..database import get_db
 from sqlalchemy.orm import Session
 from ..schemas import UserCreate,UserResponse
 from .. import security
-router = APIRouter(prefix='/user')
 from .. import models
 from .. dependencies import get_current_user
-from ..dependencies import require_admin
+
+router = APIRouter(prefix='/user')
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=UserResponse)
 def signup(payload: UserCreate ,db:Session=Depends(get_db)):
@@ -26,7 +26,5 @@ def signup(payload: UserCreate ,db:Session=Depends(get_db)):
 def get_current_user_details( current_user = Depends(get_current_user)):
     return current_user
 
-@router.post('/admin/test')
-def admin_test(current_user = Depends(require_admin)):
-    return current_user
+
     
