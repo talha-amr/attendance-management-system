@@ -33,4 +33,4 @@ def get_approved_teacher(approved=Depends(require_approved_teacher)):
 @router.get('/me',response_model=TeacherResponse)
 def get_current_teacher(teacher=Depends(require_teacher_profile)):
     return teacher
-    
+

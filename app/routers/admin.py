@@ -19,7 +19,7 @@ def get_pending_teachers(db:Session=Depends(get_db),current_user=Depends(require
     teachers=db.query(models.Teacher).filter(models.Teacher.approval_status==TeacherApprovalStatus.PENDING).all()
     return teachers
 
-@router.patch('/teachers/{teacher_id}/approve')
+@router.patch('/teachers/{teacher_id}/approve',status_code=status.HTTP_200_OK)
 def approve_teacher(teacher_id:int,db:Session=Depends(get_db),current_user=Depends(require_admin)):
     teacher=db.query(models.Teacher).filter(models.Teacher.id==teacher_id).first()
     if teacher:
@@ -28,7 +28,7 @@ def approve_teacher(teacher_id:int,db:Session=Depends(get_db),current_user=Depen
         return {"detail": "Teacher Approved Successfully"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="teacher not found")
 
-@router.patch('/teachers/{teacher_id}/reject')
+@router.patch('/teachers/{teacher_id}/reject',status_code=status.HTTP_200_OK)
 def reject_teacher(teacher_id:int,db:Session=Depends(get_db),current_user=Depends(require_admin)):
     teacher=db.query(models.Teacher).filter(models.Teacher.id==teacher_id).first()
     if teacher:
