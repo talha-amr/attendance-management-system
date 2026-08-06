@@ -1,14 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
 
-export default function Navbar({ user }) {
-  const router = useRouter();
-
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    router.push("/auth");
-  };
+export default function Navbar() {
+  const { user, loading, logout } = useContext(AuthContext);
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -38,25 +34,29 @@ export default function Navbar({ user }) {
             Attendance
           </button>
 
-          <div className="hidden items-center gap-3 border-l border-slate-200 pl-6 sm:flex">
-            <div className="text-right">
-              <p className="text-sm font-semibold text-slate-800">
-                {user?.name || "User"}
-              </p>
+          {loading ? (
+            <p className="text-sm text-slate-500">Loading...</p>
+          ) : (
+            <div className="hidden items-center gap-3 border-l border-slate-200 pl-6 sm:flex">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-slate-800">
+                  {user?.name || "User"}
+                </p>
 
-              <p className="text-xs text-slate-500">
-                {user?.role || "Role"}
-              </p>
-            </div>
+                <p className="text-xs text-slate-500">
+                  {user?.role || "Role"}
+                </p>
+              </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={logout}
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
           >
             Logout
