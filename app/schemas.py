@@ -70,3 +70,15 @@ class StudentResponse(BaseModel):
     user: UserResponse
 
     model_config = {"from_attributes": True}
+
+class SubjectCreate(BaseModel):
+    name:str
+    code:str
+
+class SubjectResponse(BaseModel):
+    id: int
+    name: str
+    code: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

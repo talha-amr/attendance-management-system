@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from .routers import user,auth,teacher,admin
+from .routers import user,auth,teacher,admin,student
 from .database import get_db
 from app.services.email_service import send_email
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +22,8 @@ app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(teacher.router)
 app.include_router(admin.router)
+app.include_router(student.router)
+
 
 @app.get("/")
 def root(database: Session = Depends(get_db)):
