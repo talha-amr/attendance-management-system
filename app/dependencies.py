@@ -56,4 +56,24 @@ def require_approved_teacher(current_user: models.Teacher = Depends(require_teac
         )
 
     return current_user
+
+def require_student(current_user: models.User = Depends(get_current_user)):
+    if current_user.role != UserRoles.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="student access required"
+        )
+
+    return current_user
+
+def require_student_profile(current_user: models.User = Depends(require_student)):
+    if not current_user.student :
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="student profile not found"
+        )
+
+    return current_user.student
+
+
     

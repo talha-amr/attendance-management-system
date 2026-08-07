@@ -17,6 +17,9 @@ def signup(payload: UserCreate ,db:Session=Depends(get_db)):
         user_dict["password"]=hashed_password
         new_user=models.User(**user_dict)
         db.add(new_user)
+        db.flush()
+        new_student=models.Student(user_id=new_user.id)
+        db.add(new_student)
         db.commit()
         db.refresh(new_user)
         return new_user

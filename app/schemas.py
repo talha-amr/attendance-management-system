@@ -62,3 +62,11 @@ class TeacherResponse(BaseModel):
     approval_status:TeacherApprovalStatus
     user:UserResponse
     model_config = {"from_attributes": True}
+
+class StudentResponse(BaseModel):
+    id: int
+    user_id: int
+    created_at: datetime
+    user: UserResponse
+
+    model_config = {"from_attributes": True}

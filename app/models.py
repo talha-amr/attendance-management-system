@@ -20,6 +20,9 @@ class User(Base):
     teacher: Mapped[Optional["Teacher"]] = relationship(
     back_populates="user",
     uselist=False)
+    student: Mapped[Optional["Student"]] = relationship(
+    back_populates="user",
+    uselist=False)
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
@@ -38,3 +41,62 @@ class Teacher(Base):
 
     user: Mapped["User"] = relationship(
     back_populates="teacher") 
+    course_sections: Mapped[list["CourseSection"]] = relationship(
+    back_populates="teacher"
+    )
+
+
+class Student(Base):
+    __tablename__="students"
+    id:Mapped[int]=mapped_column(primary_key=True,nullable=False)
+    user_id:Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"),unique=True,nullable=False)
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+    user: Mapped["User"] = relationship(
+    back_populates="student")
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+    back_populates="student"
+    )
+
+class Subject(Base):
+    __tablename__="subjects"
+    id:Mapped[int]=mapped_column(primary_key=True,nullable=False)
+    name:Mapped[str]=mapped_column(nullable=False,unique=True)
+    code: Mapped[str] = mapped_column(nullable=False, unique=True)
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+    course_sections: Mapped[list["CourseSection"]] = relationship(
+    back_populates="subject" )   
+
+class CourseSection(Base):
+    __tablename__="course_sections"
+    id:Mapped[int]=mapped_column(primary_key=True,nullable=False)
+    subject_id:Mapped[int] = mapped_column(ForeignKey("subjects.id"),nullable=False)
+    teacher_id:Mapped[int]= mapped_column(ForeignKey("teachers.id"),nullable=False)
+    section_name:Mapped[str]=mapped_column(nullable=False)
+    semester:Mapped[int]=mapped_column(nullable=False)
+    academic_year:Mapped[int]=mapped_column(nullable=False)
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+    subject: Mapped["Subject"] = relationship(
+    back_populates="course_sections"
+    )
+
+    teacher: Mapped["Teacher"] = relationship(
+    back_populates="course_sections"
+    )
+
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+    back_populates="course_section"
+    )
+
+
+class Enrollment(Base):
+    __tablename__="enrollments"
+    student_id:Mapped[int] = mapped_column(ForeignKey("students.id",ondelete="CASCADE"),primary_key=True,nullable=False)
+    course_section_id:Mapped[int] = mapped_column(ForeignKey("course_sections.id",ondelete="CASCADE"),primary_key=True,nullable=False)
+    enrolled_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+    student: Mapped["Student"] = relationship(
+    back_populates="enrollments"
+    )
+
+    course_section: Mapped["CourseSection"] = relationship(
+    back_populates="enrollments"
+    )
