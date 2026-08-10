@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
-from sqlalchemy.orm import Session
-from ..schemas import TeacherCreate,UserResponse,TeacherResponse
+from sqlalchemy.orm import Session,joinedload
+from ..schemas import TeacherCreate,UserResponse,TeacherResponse,TeacherCourseSectionResponse
 from .. import security
 from .. import models
 from .. dependencies import require_approved_teacher,require_teacher_profile
@@ -34,3 +34,18 @@ def get_approved_teacher(approved=Depends(require_approved_teacher)):
 def get_current_teacher(teacher=Depends(require_teacher_profile)):
     return teacher
 
+@router.get('/me/course-sections',response_model=list[TeacherCourseSectionResponse])
+def get_course_sections(db:Session=Depends(get_db),curr_teacher:models.Teacher=Depends(require_approved_teacher)):
+    courses = ( db.query(models.CourseSection).options(joinedload(models.CourseSection.subject) ).filter(models.CourseSection.teacher_id == curr_teacher.id).all())
+    return [
+        TeacherCourseSectionResponse(
+            course_section_id=course.id,
+            subject_id=course.subject.id,
+            subject_name=course.subject.name,
+            subject_code=course.subject.code,
+            section_name=course.section_name,
+            semester=course.semester,
+            academic_year=course.academic_year,
+        )
+        for course in courses
+    ]

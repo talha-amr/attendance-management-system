@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
-from sqlalchemy.orm import Session
-from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse
+from sqlalchemy.orm import Session,joinedload
+from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse
 from .. import models
 from .. dependencies import require_student,require_student_profile
 from .. enums import UserRoles
@@ -24,3 +24,42 @@ def enroll_student(payload:EnrollmentCreate,db:Session=Depends(get_db),curr_stud
     db.commit()
     db.refresh(new_enrollment)
     return new_enrollment
+
+    
+@router.get(
+    "/me/enrollments",
+    response_model=list[StudentEnrollmentResponse]
+)
+def get_my_enrollments(
+    db: Session = Depends(get_db),
+    curr_student: models.Student = Depends(require_student_profile),
+):
+    enrollments = (
+        db.query(models.Enrollment)
+        .options(
+            joinedload(models.Enrollment.course_section)
+            .joinedload(models.CourseSection.subject),
+
+            joinedload(models.Enrollment.course_section)
+            .joinedload(models.CourseSection.teacher)
+            .joinedload(models.Teacher.user),
+        )
+        .filter(models.Enrollment.student_id == curr_student.id)
+        .all()
+    )
+
+    return [
+        StudentEnrollmentResponse(
+            course_section_id=enrollment.course_section.id,
+            subject_id=enrollment.course_section.subject.id,
+            subject_name=enrollment.course_section.subject.name,
+            subject_code=enrollment.course_section.subject.code,
+            teacher_id=enrollment.course_section.teacher.id,
+            teacher_name=enrollment.course_section.teacher.user.name,
+            section_name=enrollment.course_section.section_name,
+            semester=enrollment.course_section.semester,
+            academic_year=enrollment.course_section.academic_year,
+            enrolled_at=enrollment.enrolled_at,
+        )
+        for enrollment in enrollments
+    ]

@@ -109,11 +109,54 @@ class CourseSectionResponse(BaseModel):
 class EnrollmentCreate(BaseModel):
     course_section_id: int = Field(gt=0)
 
+class UserBasicResponse(BaseModel):
+    id: int
+    name: str
 
+    model_config = {"from_attributes": True}
+class EnrollmentTeacherResponse(BaseModel):
+    id: int
+    user: UserBasicResponse
+
+    model_config = {"from_attributes": True}
+
+
+
+class EnrollmentCourseSectionResponse(BaseModel):
+    id: int
+    section_name: str
+    semester: int
+    academic_year: int
+    subject: SubjectResponse
+    teacher: EnrollmentTeacherResponse
+
+    model_config = {"from_attributes": True}
 class EnrollmentResponse(BaseModel):
     student_id: int
     course_section_id: int
     enrolled_at: datetime
-    course_section: CourseSectionResponse
+    course_section: EnrollmentCourseSectionResponse
 
     model_config = {"from_attributes": True}
+
+class StudentEnrollmentResponse(BaseModel):
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    teacher_id: int
+    teacher_name: str
+    section_name: str
+    semester: int
+    academic_year: int
+    enrolled_at: datetime
+
+
+class TeacherCourseSectionResponse(BaseModel):
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    section_name: str
+    semester:int
+    academic_year: int

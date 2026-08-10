@@ -76,4 +76,5 @@ def require_student_profile(current_user: models.User = Depends(require_student)
     return current_user.student
 
 
+
     
