@@ -16,17 +16,6 @@ export default function TeacherDashboard() {
         setLoading(true);
         setError("");
 
-        /*
-          TODO: Teacher profile integration
-
-          1. Get access_token from localStorage.
-          2. If missing, redirect to /auth.
-          3. Fetch GET /teachers/me with the Bearer token.
-          4. Convert the response to JSON.
-          5. Handle 401 by removing the token and redirecting.
-          6. Handle 403 and other unsuccessful responses.
-          7. Store the successful response using setTeacher(data).
-        */
        const token= localStorage.getItem("access_token")
 
         if (!token) {

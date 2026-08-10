@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
-from sqlalchemy.orm import Session
-from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate
+from sqlalchemy.orm import Session,joinedload
+from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse
 from .. import models
 from .. dependencies import require_admin
 from ..enums import TeacherApprovalStatus
@@ -57,3 +57,51 @@ def create_subject(payload:SubjectCreate,db:Session=Depends(get_db),current_user
 @router.get('/subjects',response_model=list[SubjectResponse])
 def get_subjects(db:Session=Depends(get_db),current_user=Depends(require_admin)):
     return db.query(models.Subject).order_by(models.Subject.code).all()
+
+
+@router.post('/course-sections',response_model=CourseSectionResponse,status_code=status.HTTP_201_CREATED)
+def create_course_section(payload:CourseSectionCreate,db:Session=Depends(get_db),current_user=Depends(require_admin)):
+    section_name=payload.section_name.strip().upper()
+
+    if not section_name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Section name is required")
+
+    subject=db.query(models.Subject).filter(models.Subject.id==payload.subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Subject not found")
+
+    teacher=db.query(models.Teacher).filter(models.Teacher.id==payload.teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Teacher not found")
+
+    if teacher.approval_status!=TeacherApprovalStatus.APPROVED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Teacher must be approved")
+
+    section_check=db.query(models.CourseSection).filter(
+        models.CourseSection.subject_id==payload.subject_id,
+        models.CourseSection.section_name==section_name,
+        models.CourseSection.semester==payload.semester,
+        models.CourseSection.academic_year==payload.academic_year
+    ).first()
+
+    if section_check:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Course section already exists")
+
+    section_dict=payload.model_dump()
+    section_dict["section_name"]=section_name
+
+    new_section=models.CourseSection(**section_dict)
+    db.add(new_section)
+    db.commit()
+    db.refresh(new_section)
+
+    return new_section
+
+@router.get('/course-sections',response_model=list[CourseSectionResponse])
+def get_course_sections(db:Session=Depends(get_db),current_user=Depends(require_admin)):
+    courses=db.query(models.CourseSection).options(
+        joinedload(models.CourseSection.subject),
+        joinedload(models.CourseSection.teacher).joinedload(models.Teacher.user)
+    ).all()
+    return courses
+

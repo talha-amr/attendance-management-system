@@ -5,6 +5,8 @@ from typing import Optional,Annotated
 from pydantic import AfterValidator,Field
 
 
+
+
 def validate_password(value:str)->str:
     if not any(character.islower() for character in value):
         raise ValueError("Password must contain at least one lowercase letter")
@@ -80,5 +82,38 @@ class SubjectResponse(BaseModel):
     name: str
     code: str
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class CourseSectionCreate(BaseModel):
+    subject_id:int=Field(gt=0)
+    teacher_id:int=Field(gt=0)
+    section_name:str=Field(min_length=1,max_length=20)
+    semester:int=Field(ge=1,le=8)
+    academic_year:int=Field(ge=2000,le=2100)
+
+    
+class CourseSectionResponse(BaseModel):
+    id:int
+    subject_id:int
+    teacher_id:int
+    section_name:str
+    semester:int
+    academic_year:int
+    created_at:datetime
+    subject:SubjectResponse
+    teacher:TeacherResponse
+
+    model_config={"from_attributes":True}
+
+class EnrollmentCreate(BaseModel):
+    course_section_id: int = Field(gt=0)
+
+
+class EnrollmentResponse(BaseModel):
+    student_id: int
+    course_section_id: int
+    enrolled_at: datetime
+    course_section: CourseSectionResponse
 
     model_config = {"from_attributes": True}
