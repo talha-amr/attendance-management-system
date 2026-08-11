@@ -121,6 +121,7 @@ def get_section_students(section_id: int, db: Session = Depends(get_db), current
         for enrollment in enrollments
     ]
 
+
 @router.post('/enrollments',response_model=EnrollmentResponse)
 def enroll_student(payload:AdminEnrollmentCreate,db: Session = Depends(get_db), current_user=Depends(require_admin)):
     student_check=db.query(models.Student).filter(models.Student.id==payload.student_id).first()
@@ -173,3 +174,21 @@ def create_timetable(payload:TimeTableCreate,db: Session = Depends(get_db), curr
     db.commit()
     db.refresh(new_time_table)
     return new_time_table
+
+
+@router.get('/course-sections/{section_id}/timetables',response_model=list[TimeTableResponse])
+def get_timetable(section_id:int,db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    course_section_check=db.query(models.CourseSection).filter(models.CourseSection.id==section_id).first()
+    if not course_section_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course Section not found")
+    courses_list=db.query(models.TimeTable).filter(models.TimeTable.course_section_id==section_id).all()
+    return courses_list
+
+@router.delete('/timetables/{timetable_id}',status_code=status.HTTP_204_NO_CONTENT)
+def delete_timetable(timetable_id:int,db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    timetable=db.query(models.TimeTable).filter(models.TimeTable.id==timetable_id).first()
+    if not timetable:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Time Table not found")
+    db.delete(timetable)
+    db.commit()
+    return

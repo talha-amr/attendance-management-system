@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import TeacherCreate,UserResponse,TeacherResponse,TeacherCourseSectionResponse,TeacherStudentResponse
+from ..schemas import TeacherCreate,UserResponse,TeacherResponse,TeacherCourseSectionResponse,TeacherStudentResponse,TimeTableResponse
 from .. import security
 from .. import models
 from .. dependencies import require_approved_teacher,require_teacher_profile
@@ -52,7 +52,7 @@ def get_course_sections(db:Session=Depends(get_db),curr_teacher:models.Teacher=D
 @router.get('/me/course-sections/{section_id}/students',response_model=list[TeacherStudentResponse])
 def get_student_in_course(section_id:int,db:Session=Depends(get_db),curr_teacher:models.Teacher=Depends(require_approved_teacher)):
     enrollments= (db.query(models.Enrollment).join(models.Enrollment.course_section)
-.options(joinedload(models.Enrollment.student).joinedload(models.Student.user)).filter(models.Enrollment.course_section_id==section_id,models.CourseSection.teacher_id == curr_teacher.id).all())
+    .options(joinedload(models.Enrollment.student).joinedload(models.Student.user)).filter(models.Enrollment.course_section_id==section_id,models.CourseSection.teacher_id == curr_teacher.id).all())
     return [
     TeacherStudentResponse(
         student_id=enrollment.student.id,
@@ -61,3 +61,7 @@ def get_student_in_course(section_id:int,db:Session=Depends(get_db),curr_teacher
     )
     for enrollment in enrollments
     ]
+@router.get('/timetables',response_model=list[TimeTableResponse])
+def get_timetable(db:Session=Depends(get_db),curr_teacher:models.Teacher=Depends(require_approved_teacher)):
+    timetables=db.query(models.TimeTable).join(models.TimeTable.course_section).filter(models.CourseSection.teacher_id==curr_teacher.id).all()
+    return timetables

@@ -1,10 +1,11 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse
+from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse
 from .. import models
 from .. dependencies import require_student,require_student_profile
-from .. enums import UserRoles
+from .. enums import UserRoles,DaysOfWeek
+from sqlalchemy import case
 
 router=APIRouter(prefix='/students')
 @router.get('/me',response_model=StudentResponse)
@@ -19,6 +20,23 @@ def enroll_student(payload:EnrollmentCreate,db:Session=Depends(get_db),curr_stud
     enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.student_id==curr_student.id,models.Enrollment.course_section_id==payload.course_section_id).first()
     if enrollment_check:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Already Enrolled")
+
+    student_timetable=db.query(models.TimeTable).join(models.TimeTable.course_section).join(models.CourseSection.enrollments).filter(
+        models.Enrollment.student_id==curr_student.id,
+        models.TimeTable.course_section_id!=payload.course_section_id
+    ).all()
+
+    new_course_timetable=db.query(models.TimeTable).filter(
+        models.TimeTable.course_section_id==payload.course_section_id
+    ).all()
+
+    for new_time in new_course_timetable:
+        for existing_time in student_timetable:
+            if (new_time.day_of_week==existing_time.day_of_week and
+                new_time.start_time<existing_time.end_time and
+                new_time.end_time>existing_time.start_time):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Course schedule conflicts with an already enrolled course")
+
     new_enrollment= models.Enrollment(student_id=curr_student.id,course_section_id=payload.course_section_id)
     db.add(new_enrollment)
     db.commit()
@@ -26,26 +44,13 @@ def enroll_student(payload:EnrollmentCreate,db:Session=Depends(get_db),curr_stud
     return new_enrollment
 
     
-@router.get(
-    "/me/enrollments",
-    response_model=list[StudentEnrollmentResponse]
-)
-def get_my_enrollments(
-    db: Session = Depends(get_db),
-    curr_student: models.Student = Depends(require_student_profile),
-):
-    enrollments = (
-        db.query(models.Enrollment)
-        .options(
-            joinedload(models.Enrollment.course_section)
-            .joinedload(models.CourseSection.subject),
-
-            joinedload(models.Enrollment.course_section)
+@router.get("/me/enrollments",response_model=list[StudentEnrollmentResponse])
+def get_my_enrollments( db: Session = Depends(get_db),curr_student: models.Student = Depends(require_student_profile),):
+    enrollments = ( db.query(models.Enrollment) .options( joinedload(models.Enrollment.course_section) .joinedload(models.CourseSection.subject),
+             joinedload(models.Enrollment.course_section)
             .joinedload(models.CourseSection.teacher)
             .joinedload(models.Teacher.user),
-        )
-        .filter(models.Enrollment.student_id == curr_student.id)
-        .all()
+        ).filter(models.Enrollment.student_id == curr_student.id).all()
     )
 
     return [
@@ -63,3 +68,15 @@ def get_my_enrollments(
         )
         for enrollment in enrollments
     ]
+@router.get('/timetables',response_model=list[TimeTableResponse])
+def get_timetable(db: Session = Depends(get_db),curr_student: models.Student = Depends(require_student_profile)):
+    student_timetables=db.query(models.TimeTable).join(models.TimeTable.course_section).join(models.CourseSection.enrollments).filter(models.Enrollment.student_id==curr_student.id).order_by(case(
+        (models.TimeTable.day_of_week == DaysOfWeek.MONDAY, 1),
+        (models.TimeTable.day_of_week == DaysOfWeek.TUESDAY, 2),
+        (models.TimeTable.day_of_week == DaysOfWeek.WEDNESDAY, 3),
+        (models.TimeTable.day_of_week == DaysOfWeek.THURSDAY, 4),
+        (models.TimeTable.day_of_week == DaysOfWeek.FRIDAY, 5),
+        (models.TimeTable.day_of_week == DaysOfWeek.SATURDAY, 6),
+        (models.TimeTable.day_of_week == DaysOfWeek.SUNDAY, 7),
+    ),models.TimeTable.start_time).all()
+    return student_timetables
