@@ -3,9 +3,9 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from app.database import Base
 from sqlalchemy import DateTime, func,ForeignKey,String
-from sqlalchemy import Enum as SQLEnum
-from datetime import datetime
-from app.enums import UserRoles,TeacherApprovalStatus
+from sqlalchemy import Time,Enum as SQLEnum
+from datetime import datetime,time
+from app.enums import UserRoles,TeacherApprovalStatus,DaysOfWeek
 from typing import Optional
 
 
@@ -86,6 +86,7 @@ class CourseSection(Base):
     enrollments: Mapped[list["Enrollment"]] = relationship(
     back_populates="course_section"
     )
+    timetables: Mapped[list["TimeTable"]] = relationship(back_populates="course_section" )
 
 
 class Enrollment(Base):
@@ -100,3 +101,14 @@ class Enrollment(Base):
     course_section: Mapped["CourseSection"] = relationship(
     back_populates="enrollments"
     )
+
+class TimeTable(Base):
+    __tablename__="timetables"
+    id:Mapped[int]=mapped_column(primary_key=True,nullable=False)
+    course_section_id:Mapped[int] = mapped_column(ForeignKey("course_sections.id",ondelete="CASCADE"),nullable=False)
+    day_of_week: Mapped[DaysOfWeek] = mapped_column(SQLEnum(DaysOfWeek, name="days_of_week"), nullable=False )
+    start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    end_time: Mapped[time] = mapped_column(Time, nullable=False)
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+
+    course_section: Mapped["CourseSection"] = relationship(back_populates="timetables")

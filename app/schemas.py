@@ -1,8 +1,8 @@
 from pydantic import BaseModel,EmailStr
-from .enums import UserRoles,TeacherApprovalStatus
-from datetime import datetime
+from .enums import UserRoles,TeacherApprovalStatus,DaysOfWeek
+from datetime import datetime,time
 from typing import Optional,Annotated
-from pydantic import AfterValidator,Field
+from pydantic import AfterValidator,Field,model_validator
 
 
 
@@ -109,6 +109,8 @@ class CourseSectionResponse(BaseModel):
 class EnrollmentCreate(BaseModel):
     course_section_id: int = Field(gt=0)
 
+class AdminEnrollmentCreate(EnrollmentCreate):
+    student_id:int = Field(gt=0)
 class UserBasicResponse(BaseModel):
     id: int
     name: str
@@ -171,3 +173,25 @@ class AdminStudentEnrollmentResponse(BaseModel):
     name: str
     email: EmailStr
     enrolled_at: datetime
+
+class TimeTableCreate(BaseModel):
+    course_section_id: int = Field(gt=0)
+    day_of_week: DaysOfWeek
+    start_time: time
+    end_time: time
+
+    @model_validator(mode="after")
+    def validate_times(self):
+        if self.end_time <= self.start_time:
+            raise ValueError("End time must be after start time")
+        return self
+
+class TimeTableResponse(BaseModel):
+    id: int
+    course_section_id: int
+    day_of_week: DaysOfWeek
+    start_time: time
+    end_time: time
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse,AdminStudentEnrollmentResponse
+from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse,AdminStudentEnrollmentResponse,AdminEnrollmentCreate,EnrollmentResponse,TimeTableCreate,TimeTableResponse
 from .. import models
 from .. dependencies import require_admin
 from ..enums import TeacherApprovalStatus
@@ -120,3 +120,56 @@ def get_section_students(section_id: int, db: Session = Depends(get_db), current
         )
         for enrollment in enrollments
     ]
+
+@router.post('/enrollments',response_model=EnrollmentResponse)
+def enroll_student(payload:AdminEnrollmentCreate,db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    student_check=db.query(models.Student).filter(models.Student.id==payload.student_id).first()
+    course_section_check=db.query(models.CourseSection).filter(models.CourseSection.id==payload.course_section_id).first()
+    if not student_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="student not found")
+    if not course_section_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course not found")
+    enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.course_section_id==payload.course_section_id,models.Enrollment.student_id==payload.student_id).first()
+    if enrollment_check:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Student Already Enrolled")
+    new_enrollment=models.Enrollment(course_section_id=payload.course_section_id,student_id=payload.student_id)
+    db.add(new_enrollment)
+    db.commit()
+    db.refresh(new_enrollment)
+    return new_enrollment
+      
+@router.delete('/enrollments/{student_id}/{course_section_id}',status_code=status.HTTP_204_NO_CONTENT)
+def delete_enrollment(student_id:int,course_section_id:int,db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.course_section_id==course_section_id,models.Enrollment.student_id==student_id).first()
+    if not enrollment_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Enrollment not found")
+    db.delete(enrollment_check)
+    db.commit()
+    return
+
+@router.post('/timetables',response_model=TimeTableResponse)
+def create_timetable(payload:TimeTableCreate,db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    course=db.query(models.CourseSection).filter(models.CourseSection.id==payload.course_section_id).first()
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course not found")
+    time_table = db.query(models.TimeTable).filter(models.TimeTable.course_section_id == payload.course_section_id,models.TimeTable.day_of_week == payload.day_of_week,
+    models.TimeTable.start_time < payload.end_time,
+    models.TimeTable.end_time > payload.start_time
+    ).first()
+    if time_table:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Time-Table Overlap")
+    teacher_time_table = db.query(models.TimeTable).join(
+            models.TimeTable.course_section
+        ).filter(
+            models.CourseSection.teacher_id == course.teacher_id,
+            models.TimeTable.day_of_week == payload.day_of_week,
+            models.TimeTable.start_time < payload.end_time,
+            models.TimeTable.end_time > payload.start_time
+        ).first()
+    if teacher_time_table:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Teacher already has a class at this time")
+    new_time_table=models.TimeTable(**payload.model_dump())
+    db.add(new_time_table)
+    db.commit()
+    db.refresh(new_time_table)
+    return new_time_table
