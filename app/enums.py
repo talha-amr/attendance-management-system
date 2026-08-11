@@ -20,3 +20,7 @@ class DaysOfWeek(str, Enum):
     FRIDAY = "friday"
     SATURDAY = "saturday"
     SUNDAY = "sunday"
+
+class AttendanceStatus(str,Enum):
+    PRESENT="present"
+    ABSENT="absent"

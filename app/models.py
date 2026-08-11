@@ -3,9 +3,9 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from app.database import Base
 from sqlalchemy import DateTime, func,ForeignKey,String
-from sqlalchemy import Time,Enum as SQLEnum
-from datetime import datetime,time
-from app.enums import UserRoles,TeacherApprovalStatus,DaysOfWeek
+from sqlalchemy import Time,Enum as SQLEnum,Date,UniqueConstraint
+from datetime import datetime,time,date as DateType
+from app.enums import UserRoles,TeacherApprovalStatus,DaysOfWeek,AttendanceStatus
 from typing import Optional
 
 
@@ -56,6 +56,8 @@ class Student(Base):
     enrollments: Mapped[list["Enrollment"]] = relationship(
     back_populates="student"
     )
+    attendance: Mapped[list["Attendance"]] = relationship(
+    back_populates="student")
 
 class Subject(Base):
     __tablename__="subjects"
@@ -87,7 +89,7 @@ class CourseSection(Base):
     back_populates="course_section"
     )
     timetables: Mapped[list["TimeTable"]] = relationship(back_populates="course_section" )
-
+    attendance: Mapped[list["Attendance"]] = relationship(back_populates="course_section")
 
 class Enrollment(Base):
     __tablename__="enrollments"
@@ -112,3 +114,17 @@ class TimeTable(Base):
     created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
 
     course_section: Mapped["CourseSection"] = relationship(back_populates="timetables")
+
+
+class Attendance(Base):
+    __tablename__="attendance"
+    __table_args__ = ( UniqueConstraint("student_id","course_section_id","date",name="uq_attendance_student_section_date" ),)
+    id:Mapped[int]=mapped_column(primary_key=True,nullable=False)
+    student_id:Mapped[int] = mapped_column(ForeignKey("students.id",ondelete="CASCADE"),nullable=False)
+    course_section_id:Mapped[int] = mapped_column(ForeignKey("course_sections.id",ondelete="CASCADE"),nullable=False)
+    date: Mapped[DateType] = mapped_column(Date, nullable=False)
+    status: Mapped[AttendanceStatus] = mapped_column(SQLEnum(AttendanceStatus, name="attendance_status"), nullable=False )
+    marked_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+
+    student:Mapped["Student"] = relationship(back_populates="attendance")
+    course_section: Mapped["CourseSection"] = relationship(back_populates="attendance")
