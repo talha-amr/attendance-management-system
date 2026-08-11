@@ -64,71 +64,7 @@ export default function AuthForm() {
     try {
       setLoading(true);
 
-      if (isLogin) {
-        const loginData = new URLSearchParams();
-
-        loginData.append("username", formData.email);
-        loginData.append("password", formData.password);
-
-        const response = await fetch("http://127.0.0.1:8000/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: loginData,
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem("access_token", data.access_token);
-          setMessage("Logged In Successfully");
-          router.push("/dashboard");
-        } else {
-          setError(data.detail);
-        }
-      } else {
-        const signupData = {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        };
-
-        if (signupRole === "teacher") {
-
-        const response = await fetch("http://127.0.0.1:8000/teachers/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(signupData),
-        });
-        const data= await response.json()
-        if (response.ok) {
-          setMessage(
-            "Teacher registration submitted. Please wait for admin approval."
-        );
-        } else {
-          setError(data.detail);
-        }
-        } else {
-          const response = await fetch("http://127.0.0.1:8000/user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(signupData),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            setMessage("Student account created successfully.");
-          } else {
-            setError(data.detail);
-          }
-        }
-      }
+      //placholder for api integration
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

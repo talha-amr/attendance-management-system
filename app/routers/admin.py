@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse
+from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse,AdminStudentEnrollmentResponse
 from .. import models
 from .. dependencies import require_admin
 from ..enums import TeacherApprovalStatus
@@ -105,3 +105,18 @@ def get_course_sections(db:Session=Depends(get_db),current_user=Depends(require_
     ).all()
     return courses
 
+@router.get("/course-sections/{section_id}/students", response_model=list[AdminStudentEnrollmentResponse])
+def get_section_students(section_id: int, db: Session = Depends(get_db), current_user=Depends(require_admin)):
+    enrollments = (db.query(models.Enrollment).join(models.Enrollment.course_section)
+        .options(joinedload(models.Enrollment.student).joinedload(models.Student.user))
+        .filter(models.Enrollment.course_section_id == section_id).all())
+
+    return [
+        AdminStudentEnrollmentResponse(
+            student_id=enrollment.student.id,
+            name=enrollment.student.user.name,
+            email=enrollment.student.user.email,
+            enrolled_at=enrollment.enrolled_at
+        )
+        for enrollment in enrollments
+    ]

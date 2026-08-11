@@ -160,3 +160,14 @@ class TeacherCourseSectionResponse(BaseModel):
     section_name: str
     semester:int
     academic_year: int
+
+class TeacherStudentResponse(BaseModel):
+    student_id: int
+    name: str
+    email: EmailStr
+
+class AdminStudentEnrollmentResponse(BaseModel):
+    student_id: int
+    name: str
+    email: EmailStr
+    enrolled_at: datetime
