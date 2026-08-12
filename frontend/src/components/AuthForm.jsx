@@ -2,11 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [isLogin, setIsLogin] = useState(true);
+  const mode = searchParams.get("mode");
+  const [isLogin, setIsLogin] = useState(mode !== "signup");
   const [signupRole, setSignupRole] = useState("student");
 
   const [formData, setFormData] = useState({
@@ -64,8 +67,55 @@ export default function AuthForm() {
     try {
       setLoading(true);
 
-      //placholder for api integration
-    } catch {
+      if (isLogin) {
+        const loginData = new URLSearchParams();
+        loginData.append("username",formData.email)
+        loginData.append("password",formData.password)
+        const response = await fetch("http://127.0.0.1:8000/auth/login",{
+          method:"POST",
+          headers:{
+            "Content-type": "application/x-www-form-urlencoded"
+          },
+          body: loginData
+        })
+        const data=await response.json()
+        if (response.ok)
+        {
+          localStorage.setItem("access_token", data.access_token)
+          setMessage("Logged In Successfully")
+          router.replace('/dashboard')
+
+        }
+
+        else
+          setError(data.detail)
+        
+
+        console.log("Login form submitted");
+      } else {
+        const signupData={
+          "name": formData.name,
+          "email":formData.email,
+          "password": formData.password
+        }
+        console.log(signupData)
+       const response= await fetch("http://127.0.0.1:8000/user",{
+        method: "POST",
+        headers: {
+          "Content-type": "application/json"
+        },
+        body: JSON.stringify(signupData)
+       })
+       const data = await response.json()
+       if (response.ok)
+       {
+        setMessage("Email Registered Successfully")
+       }
+
+       else
+        setError(data.detail)
+      }
+    } catch (error) {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

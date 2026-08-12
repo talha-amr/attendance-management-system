@@ -1,12 +1,5 @@
-import StudentDashboard from '@/components/StudentDashboard'
-import React from 'react'
+import StudentDashboard from "@/components/student/StudentDashboard";
 
-const page = () => {
-  return (
-    <div>
-      <StudentDashboard/>
-    </div>
-  )
+export default function Page() {
+  return <StudentDashboard />;
 }
-
-export default page

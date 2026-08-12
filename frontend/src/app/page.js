@@ -1,6 +1,12 @@
 // src/app/page.js
-import { redirect } from "next/navigation";
-
-export default function HomePage() {
-  redirect("/auth");
+import React from 'react'
+import LandingPage from '@/components/LandingPage'
+const page = () => {
+  return (
+    <div>
+      <LandingPage/>
+    </div>
+  )
 }
+
+export default page
