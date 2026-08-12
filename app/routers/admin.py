@@ -1,11 +1,11 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse,AdminStudentEnrollmentResponse,AdminEnrollmentCreate,EnrollmentResponse,TimeTableCreate,TimeTableResponse
+from ..schemas import TeacherResponse,SubjectResponse,SubjectCreate,CourseSectionCreate,CourseSectionResponse,AdminStudentEnrollmentResponse,AdminEnrollmentCreate,EnrollmentResponse,TimeTableCreate,TimeTableResponse,UpdateAttendance,AttendanceResponse
 from .. import models
 from .. dependencies import require_admin
-from ..enums import TeacherApprovalStatus
-
+from ..enums import TeacherApprovalStatus,AttendanceStatus
+from datetime import date,timedelta
 
 router=APIRouter(prefix='/admin')
 @router.get('/teachers',response_model=list[TeacherResponse])
@@ -192,3 +192,40 @@ def delete_timetable(timetable_id:int,db: Session = Depends(get_db), current_use
     db.delete(timetable)
     db.commit()
     return
+
+@router.get("/admin/attendance", response_model=list[AttendanceResponse])
+def get_all_attendance(
+    section_id: int | None = None, student_id: int | None = None, teacher_id: int | None = None, attendance_date: date | None = None, status: AttendanceStatus | None = None,
+    db: Session = Depends(get_db), curr_admin: models.User = Depends(require_admin)):
+    attendance_query = db.query(models.Attendance)
+
+    if section_id: 
+        attendance_query = attendance_query.filter(models.Attendance.course_section_id == section_id)
+
+    if student_id:
+        attendance_query = attendance_query.filter( models.Attendance.student_id == student_id )
+
+    if teacher_id:
+        attendance_query = attendance_query.join( models.CourseSection).filter( models.CourseSection.teacher_id == teacher_id)
+
+    if attendance_date:
+        attendance_query = attendance_query.filter(models.Attendance.date == attendance_date)
+
+    if status:
+        attendance_query = attendance_query.filter( models.Attendance.status == status)
+
+    return attendance_query.all()
+
+@router.patch('/attendance/{attendance_id}',response_model=AttendanceResponse)
+def update_attendance(attendance_id:int,payload:UpdateAttendance,db:Session=Depends(get_db),curr_admin=Depends(require_admin)):
+    attendance=db.query(models.Attendance).filter(models.Attendance.id==attendance_id).first()
+    if not attendance:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Attendance Record not Found")
+    
+    seven_days_ago = date.today() - timedelta(days=7)
+    if attendance.date<seven_days_ago:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Attendance can only be updated within 7 days")
+    attendance.status = payload.status
+    db.commit()
+    db.refresh(attendance)
+    return attendance

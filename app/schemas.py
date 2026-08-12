@@ -1,6 +1,6 @@
 from pydantic import BaseModel,EmailStr
-from .enums import UserRoles,TeacherApprovalStatus,DaysOfWeek
-from datetime import datetime,time
+from .enums import UserRoles,TeacherApprovalStatus,DaysOfWeek,AttendanceStatus
+from datetime import datetime,time,date
 from typing import Optional,Annotated
 from pydantic import AfterValidator,Field,model_validator
 
@@ -195,3 +195,17 @@ class TimeTableResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+class AttendanceCreate(BaseModel):
+    student_id: int
+    course_section_id: int
+    date:date
+    status:AttendanceStatus
+
+class AttendanceResponse(AttendanceCreate):
+    id:int
+    marked_at:datetime
+    model_config = {"from_attributes": True}
+
+class UpdateAttendance(BaseModel):
+    status: AttendanceStatus

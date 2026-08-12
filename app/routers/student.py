@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse
+from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse,AttendanceResponse
 from .. import models
 from .. dependencies import require_student,require_student_profile
 from .. enums import UserRoles,DaysOfWeek
@@ -80,3 +80,17 @@ def get_timetable(db: Session = Depends(get_db),curr_student: models.Student = D
         (models.TimeTable.day_of_week == DaysOfWeek.SUNDAY, 7),
     ),models.TimeTable.start_time).all()
     return student_timetables
+
+@router.get('/attendance',response_model=list[AttendanceResponse])
+def get_attendance(section_id:int|None=None,db:Session=Depends(get_db),curr_student:models.Student=Depends(require_student_profile)):
+    list_attendance_query=db.query(models.Attendance).filter(models.Attendance.student_id==curr_student.id)
+    if section_id:
+        course_check=db.query(models.CourseSection).filter(models.CourseSection.id==section_id).first()
+        if not course_check:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course not Found")
+        enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.student_id==curr_student.id,models.Enrollment.course_section_id==section_id).first()
+        if not enrollment_check:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Student Not Found")
+        list_attendance_query=db.query(models.Attendance).filter(models.Attendance.student_id==curr_student.id,models.Attendance.course_section_id==section_id)
+    attendance_list=list_attendance_query.all()
+    return attendance_list
