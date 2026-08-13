@@ -209,3 +209,15 @@ class AttendanceResponse(AttendanceCreate):
 
 class UpdateAttendance(BaseModel):
     status: AttendanceStatus
+
+class StudentCourseSectionResponse(BaseModel):
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    teacher_id: int
+    teacher_name: str
+    section_name: str
+    semester: int
+    academic_year: int
+    is_enrolled: bool

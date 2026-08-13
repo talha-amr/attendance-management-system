@@ -41,7 +41,7 @@ export default function RecentAttendance({
           {recentAttendance.map((record) => {
             const course = sectionMap[record.course_section_id];
 
-            const isPresent = record.status === "PRESENT";
+            const isPresent = record.status === "present";
 
             return (
               <div

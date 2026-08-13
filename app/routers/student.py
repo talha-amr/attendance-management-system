@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse,AttendanceResponse
+from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse,AttendanceResponse,StudentCourseSectionResponse
 from .. import models
 from .. dependencies import require_student,require_student_profile
 from .. enums import UserRoles,DaysOfWeek
@@ -94,3 +94,32 @@ def get_attendance(section_id:int|None=None,db:Session=Depends(get_db),curr_stud
         list_attendance_query=db.query(models.Attendance).filter(models.Attendance.student_id==curr_student.id,models.Attendance.course_section_id==section_id)
     attendance_list=list_attendance_query.all()
     return attendance_list
+
+@router.get( "/course-sections", response_model=list[StudentCourseSectionResponse])
+def get_available_course_sections( db: Session = Depends(get_db), curr_student: models.Student = Depends(require_student_profile)):
+    enrolled_section_ids = {enrollment.course_section_id 
+                            for enrollment in db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.student_id == curr_student.id
+        )
+        .all()
+    }
+
+    course_sections = (db.query(models.CourseSection).options(  joinedload(models.CourseSection.subject),  joinedload(models.CourseSection.teacher).joinedload(models.Teacher.user), ).all()
+    )
+
+    return [
+        StudentCourseSectionResponse(
+            course_section_id=course_section.id,
+            subject_id=course_section.subject.id,
+            subject_name=course_section.subject.name,
+            subject_code=course_section.subject.code,
+            teacher_id=course_section.teacher.id,
+            teacher_name=course_section.teacher.user.name,
+            section_name=course_section.section_name,
+            semester=course_section.semester,
+            academic_year=course_section.academic_year,
+            is_enrolled=course_section.id in enrolled_section_ids,
+        )
+        for course_section in course_sections
+    ]
