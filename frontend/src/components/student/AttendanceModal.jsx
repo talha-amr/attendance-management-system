@@ -3,7 +3,6 @@
 export default function AttendanceModal({
   open,
   attendance,
-  sectionMap,
   onClose,
 }) {
   if (!open) return null;
@@ -48,48 +47,63 @@ export default function AttendanceModal({
             <span>Status</span>
           </div>
 
-          {sortedAttendance.map((record) => {
-            const course = sectionMap[record.course_section_id];
+          {sortedAttendance.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="text-sm text-slate-500">
+                No attendance records available.
+              </p>
+            </div>
+          ) : (
+            sortedAttendance.map((record) => {
+              const isPresent =
+                record.status?.toUpperCase() === "PRESENT";
 
-            const isPresent = record.status === "PRESENT";
-
-            return (
-              <div
-                key={record.id}
-                className="grid gap-2 border-b border-slate-100 px-6 py-4 sm:grid-cols-[1fr_140px_110px] sm:items-center sm:gap-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {course?.subject_name || "Unknown Course"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    {course?.subject_code || "—"}
-                  </p>
-                </div>
-
-                <p className="text-xs font-medium text-slate-500">
-                  {new Date(record.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-
-                <span
-                  className={`w-fit rounded-full px-3 py-1 text-[10px] font-bold ${
-                    isPresent
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-red-50 text-red-600"
-                  }`}
+              return (
+                <div
+                  key={record.id}
+                  className="grid gap-2 border-b border-slate-100 px-6 py-4 sm:grid-cols-[1fr_140px_110px] sm:items-center sm:gap-4"
                 >
-                  {record.status}
-                </span>
-              </div>
-            );
-          })}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {record.subject_name || "Unknown Course"}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      {record.subject_code || "—"} · Section{" "}
+                      {record.section_name || "—"}
+                    </p>
+
+                    {record.teacher_name && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        Teacher: {record.teacher_name}
+                      </p>
+                    )}
+                  </div>
+
+                  <p className="text-xs font-medium text-slate-500">
+                    {new Date(record.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+
+                  <span
+                    className={`w-fit rounded-full px-3 py-1 text-[10px] font-bold ${
+                      isPresent
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-red-50 text-red-600"
+                    }`}
+                  >
+                    {record.status}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
   );
 }
+

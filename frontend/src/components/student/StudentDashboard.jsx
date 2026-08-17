@@ -12,8 +12,11 @@ import RecentAttendance from "@/components/student/RecentAttendance";
 import AttendanceModal from "@/components/student/AttendanceModal";
 
 export default function StudentDashboard() {
-  const { user, loading: authLoading, error: authError } =
-    useContext(AuthContext);
+  const {
+    user,
+    loading: authLoading,
+    error: authError,
+  } = useContext(AuthContext);
 
   const {
     enrollments,
@@ -21,7 +24,8 @@ export default function StudentDashboard() {
     attendance,
     loading: studentLoading,
     error: studentError,
-    fetchStudentData,
+    refreshStudentData,
+    refreshAttendance,
   } = useStudent();
 
   const [showCourses, setShowCourses] = useState(false);
@@ -57,7 +61,12 @@ export default function StudentDashboard() {
           </p>
 
           <button
-            onClick={fetchStudentData}
+            onClick={async () => {
+              await Promise.all([
+                refreshStudentData(),
+                refreshAttendance(),
+              ]);
+            }}
             className="mt-5 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Try Again
@@ -68,35 +77,24 @@ export default function StudentDashboard() {
   }
 
   /*
-   * Map course_section_id -> enrollment.
+   * The backend already provides the course information
+   * inside every timetable record.
    *
-   * Timetable only gives us the course_section_id,
-   * while enrollment gives us the subject/teacher details.
+   * Therefore there is no need to map timetable records
+   * through enrollments.
    */
-  const sectionMap = Object.fromEntries(
-    enrollments.map((enrollment) => [
-      enrollment.course_section_id,
-      enrollment,
-    ])
-  );
 
-  /*
-   * Get today's day.
-   *
-   * Example:
-   * "monday"
-   */
   const today = new Date()
     .toLocaleDateString("en-US", {
       weekday: "long",
     })
-    .toLowerCase();
+    .toUpperCase();
 
-  /*
-   * Get today's lectures from the timetable.
-   */
   const todaySchedule = timetable
-    .filter((item) => item.day_of_week === today)
+    .filter(
+      (item) =>
+        item.day_of_week?.toUpperCase() === today
+    )
     .sort((a, b) =>
       a.start_time.localeCompare(b.start_time)
     );
@@ -104,6 +102,7 @@ export default function StudentDashboard() {
   /*
    * Attendance calculations
    */
+
   const totalAttendance = attendance.length;
 
   const presentAttendance = attendance.filter(
@@ -126,6 +125,7 @@ export default function StudentDashboard() {
       <div className="mx-auto max-w-7xl space-y-8">
 
         {/* Header */}
+
         <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
@@ -153,6 +153,7 @@ export default function StudentDashboard() {
         </section>
 
         {/* Stats */}
+
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <DashboardStat
             label="Enrolled Courses"
@@ -181,20 +182,20 @@ export default function StudentDashboard() {
         </section>
 
         {/* Schedule + Attendance */}
+
         <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <TodaySchedule
             schedule={todaySchedule}
-            sectionMap={sectionMap}
           />
 
           <RecentAttendance
             attendance={attendance}
-            sectionMap={sectionMap}
             onViewAll={() => setShowAttendance(true)}
           />
         </section>
 
         {/* Courses */}
+
         <section>
           <div className="mb-4 flex items-end justify-between">
             <div>
@@ -218,17 +219,20 @@ export default function StudentDashboard() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {enrollments.slice(0, 4).map((course) => (
-              <CourseCard
-                key={course.course_section_id}
-                course={course}
-              />
-            ))}
+            {enrollments
+              .slice(0, 4)
+              .map((course) => (
+                <CourseCard
+                  key={course.course_section_id}
+                  course={course}
+                />
+              ))}
           </div>
         </section>
       </div>
 
       {/* Courses Modal */}
+
       <CourseModal
         open={showCourses}
         courses={enrollments}
@@ -236,10 +240,10 @@ export default function StudentDashboard() {
       />
 
       {/* Attendance Modal */}
+
       <AttendanceModal
         open={showAttendance}
         attendance={attendance}
-        sectionMap={sectionMap}
         onClose={() => setShowAttendance(false)}
       />
     </main>

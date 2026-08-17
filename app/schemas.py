@@ -221,3 +221,36 @@ class StudentCourseSectionResponse(BaseModel):
     semester: int
     academic_year: int
     is_enrolled: bool
+
+
+class StudentAttendanceResponse(BaseModel):
+    id: int
+    student_id: int
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    teacher_id: int
+    teacher_name: str
+    section_name: str
+    semester: int
+    academic_year: int
+    date: date
+    status: AttendanceStatus
+    marked_at: datetime
+
+
+class StudentTimeTableResponse(BaseModel):
+    id: int
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    teacher_id: int
+    teacher_name: str
+    section_name: str
+    semester: int
+    academic_year: int
+    day_of_week: DaysOfWeek
+    start_time: time
+    end_time: time

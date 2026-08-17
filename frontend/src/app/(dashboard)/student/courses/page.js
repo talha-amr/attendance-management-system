@@ -4,7 +4,6 @@ import { useContext } from "react";
 import { StudentContext } from "@/context/StudentContext";
 
 import CourseCard from "@/components/student/CourseCard";
-import CourseModal from "@/components/student/CourseModal";
 
 export default function StudentCourses() {
   const {
@@ -52,6 +51,7 @@ export default function StudentCourses() {
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
+
         <section className="flex items-end justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
@@ -73,6 +73,7 @@ export default function StudentCourses() {
         </section>
 
         {/* Courses */}
+
         {enrollments.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-12 text-center">
             <h2 className="font-semibold text-slate-900">
@@ -94,12 +95,6 @@ export default function StudentCourses() {
           </section>
         )}
       </div>
-
-      <CourseModal
-        open={false}
-        courses={enrollments}
-        onClose={() => {}}
-      />
     </main>
   );
 }

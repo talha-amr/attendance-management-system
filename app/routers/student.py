@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
 from sqlalchemy.orm import Session,joinedload
-from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse,AttendanceResponse,StudentCourseSectionResponse
+from ..schemas import StudentResponse,EnrollmentCreate,EnrollmentResponse,StudentEnrollmentResponse,TimeTableResponse,StudentAttendanceResponse,StudentTimeTableResponse,StudentCourseSectionResponse
 from .. import models
 from .. dependencies import require_student,require_student_profile
 from .. enums import UserRoles,DaysOfWeek
@@ -68,32 +68,109 @@ def get_my_enrollments( db: Session = Depends(get_db),curr_student: models.Stude
         )
         for enrollment in enrollments
     ]
-@router.get('/timetables',response_model=list[TimeTableResponse])
-def get_timetable(db: Session = Depends(get_db),curr_student: models.Student = Depends(require_student_profile)):
-    student_timetables=db.query(models.TimeTable).join(models.TimeTable.course_section).join(models.CourseSection.enrollments).filter(models.Enrollment.student_id==curr_student.id).order_by(case(
-        (models.TimeTable.day_of_week == DaysOfWeek.MONDAY, 1),
-        (models.TimeTable.day_of_week == DaysOfWeek.TUESDAY, 2),
-        (models.TimeTable.day_of_week == DaysOfWeek.WEDNESDAY, 3),
-        (models.TimeTable.day_of_week == DaysOfWeek.THURSDAY, 4),
-        (models.TimeTable.day_of_week == DaysOfWeek.FRIDAY, 5),
-        (models.TimeTable.day_of_week == DaysOfWeek.SATURDAY, 6),
-        (models.TimeTable.day_of_week == DaysOfWeek.SUNDAY, 7),
-    ),models.TimeTable.start_time).all()
-    return student_timetables
+@router.get(  '/timetables', response_model=list[StudentTimeTableResponse])
+def get_timetable( db: Session = Depends(get_db), curr_student: models.Student = Depends(require_student_profile)):
+    timetables = ( db.query(models.TimeTable).join(models.TimeTable.course_section ) .join(models.CourseSection.subject).join(    models.CourseSection.teacher).join( models.Teacher.user
+        ).join(
+            models.Enrollment,
+            models.Enrollment.course_section_id
+            == models.CourseSection.id
+        )
+        .filter(
+            models.Enrollment.student_id == curr_student.id
+        )
+        .all()
+    )
 
-@router.get('/attendance',response_model=list[AttendanceResponse])
-def get_attendance(section_id:int|None=None,db:Session=Depends(get_db),curr_student:models.Student=Depends(require_student_profile)):
-    list_attendance_query=db.query(models.Attendance).filter(models.Attendance.student_id==curr_student.id)
+    return [
+        StudentTimeTableResponse(
+            id=item.id,
+            course_section_id=item.course_section_id,
+
+            subject_id=item.course_section.subject.id,
+            subject_name=item.course_section.subject.name,
+            subject_code=item.course_section.subject.code,
+
+            teacher_id=item.course_section.teacher.id,
+            teacher_name=item.course_section.teacher.user.name,
+
+            section_name=item.course_section.section_name,
+            semester=item.course_section.semester,
+            academic_year=item.course_section.academic_year,
+
+            day_of_week=item.day_of_week,
+            start_time=item.start_time,
+            end_time=item.end_time,
+        )
+        for item in timetables
+    ]
+
+@router.get('/attendance',response_model=list[StudentAttendanceResponse]
+)
+def get_attendance( section_id: int | None = None,db: Session = Depends(get_db),curr_student: models.Student = Depends(require_student_profile)):
+    query = (
+        db.query(models.Attendance)
+        .join(
+            models.Attendance.course_section
+        )
+        .join(
+            models.CourseSection.subject
+        )
+        .join(
+            models.CourseSection.teacher
+        )
+        .join(
+            models.Teacher.user
+        )
+        .filter(
+            models.Attendance.student_id == curr_student.id
+        )
+    )
+
     if section_id:
-        course_check=db.query(models.CourseSection).filter(models.CourseSection.id==section_id).first()
+        course_check = (
+            db.query(models.CourseSection)
+            .filter(
+                models.CourseSection.id == section_id
+            )
+            .first()
+        )
+
         if not course_check:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course not Found")
-        enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.student_id==curr_student.id,models.Enrollment.course_section_id==section_id).first()
-        if not enrollment_check:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Student Not Found")
-        list_attendance_query=db.query(models.Attendance).filter(models.Attendance.student_id==curr_student.id,models.Attendance.course_section_id==section_id)
-    attendance_list=list_attendance_query.all()
-    return attendance_list
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course Section not found"
+            )
+
+        query = query.filter(
+            models.Attendance.course_section_id == section_id
+        )
+
+    attendance = query.all()
+
+    return [
+        StudentAttendanceResponse(
+            id=record.id,
+            student_id=record.student_id,
+            course_section_id=record.course_section_id,
+
+            subject_id=record.course_section.subject.id,
+            subject_name=record.course_section.subject.name,
+            subject_code=record.course_section.subject.code,
+
+            teacher_id=record.course_section.teacher.id,
+            teacher_name=record.course_section.teacher.user.name,
+
+            section_name=record.course_section.section_name,
+            semester=record.course_section.semester,
+            academic_year=record.course_section.academic_year,
+
+            date=record.date,
+            status=record.status,
+            marked_at=record.marked_at,
+        )
+        for record in attendance
+    ]
 
 @router.get( "/course-sections", response_model=list[StudentCourseSectionResponse])
 def get_available_course_sections( db: Session = Depends(get_db), curr_student: models.Student = Depends(require_student_profile)):

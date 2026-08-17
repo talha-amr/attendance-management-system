@@ -1,6 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 export const StudentContext = createContext();
@@ -19,10 +24,6 @@ export function StudentProvider({ children }) {
   // ==========================================
   // REFRESH STUDENT DATA
   // ==========================================
-  // Refreshes data affected by enrollment changes:
-  // - Enrollments
-  // - Available course sections
-  // - Timetable
 
   async function refreshStudentData() {
     try {
@@ -45,41 +46,58 @@ export function StudentProvider({ children }) {
         coursesResponse,
         timetableResponse,
       ] = await Promise.all([
-        fetch("http://127.0.0.1:8000/students/me/enrollments", {
-          method: "GET",
-          headers,
-        }),
+        fetch(
+          "http://127.0.0.1:8000/students/me/enrollments",
+          {
+            method: "GET",
+            headers,
+          }
+        ),
 
-        fetch("http://127.0.0.1:8000/students/course-sections", {
-          method: "GET",
-          headers,
-        }),
+        fetch(
+          "http://127.0.0.1:8000/students/course-sections",
+          {
+            method: "GET",
+            headers,
+          }
+        ),
 
-        fetch("http://127.0.0.1:8000/students/timetables", {
-          method: "GET",
-          headers,
-        }),
+        fetch(
+          "http://127.0.0.1:8000/students/timetables",
+          {
+            method: "GET",
+            headers,
+          }
+        ),
       ]);
 
-      const enrollmentData = await enrollmentResponse.json();
-      const coursesData = await coursesResponse.json();
-      const timetableData = await timetableResponse.json();
+      const enrollmentData =
+        await enrollmentResponse.json();
+
+      const coursesData =
+        await coursesResponse.json();
+
+      const timetableData =
+        await timetableResponse.json();
 
       if (!enrollmentResponse.ok) {
         throw new Error(
-          enrollmentData.detail || "Failed to load enrollments"
+          enrollmentData.detail ||
+            "Failed to load enrollments"
         );
       }
 
       if (!coursesResponse.ok) {
         throw new Error(
-          coursesData.detail || "Failed to load available courses"
+          coursesData.detail ||
+            "Failed to load available courses"
         );
       }
 
       if (!timetableResponse.ok) {
         throw new Error(
-          timetableData.detail || "Failed to load timetable"
+          timetableData.detail ||
+            "Failed to load timetable"
         );
       }
 
@@ -87,7 +105,10 @@ export function StudentProvider({ children }) {
       setAvailableCourses(coursesData);
       setTimetable(timetableData);
     } catch (err) {
-      setError(err.message || "Unable to load student data.");
+      setError(
+        err.message ||
+          "Unable to load student data."
+      );
     } finally {
       setLoading(false);
     }
@@ -101,7 +122,8 @@ export function StudentProvider({ children }) {
     try {
       setError("");
 
-      const token = localStorage.getItem("access_token");
+      const token =
+        localStorage.getItem("access_token");
 
       if (!token) {
         router.replace("/auth");
@@ -122,49 +144,18 @@ export function StudentProvider({ children }) {
 
       if (!response.ok) {
         throw new Error(
-          data.detail || "Failed to load attendance"
+          data.detail ||
+            "Failed to load attendance"
         );
       }
 
       setAttendance(data);
     } catch (err) {
-      setError(err.message || "Failed to refresh attendance");
-    }
-  }
-
-  // ==========================================
-  // GET ATTENDANCE BY COURSE SECTION
-  // ==========================================
-  // Used when the student opens a specific
-  // course's attendance details.
-
-  async function getAttendanceBySection(sectionId) {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      router.replace("/auth");
-      return;
-    }
-
-    const response = await fetch(
-      `http://127.0.0.1:8000/students/attendance?section_id=${sectionId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.detail || "Failed to load course attendance"
+      setError(
+        err.message ||
+          "Failed to refresh attendance"
       );
     }
-
-    return data;
   }
 
   // ==========================================
@@ -198,7 +189,6 @@ export function StudentProvider({ children }) {
         // Refresh functions
         refreshStudentData,
         refreshAttendance,
-        getAttendanceBySection,
       }}
     >
       {children}

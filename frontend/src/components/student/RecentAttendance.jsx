@@ -1,10 +1,12 @@
 export default function RecentAttendance({
   attendance,
-  sectionMap,
   onViewAll,
 }) {
   const recentAttendance = [...attendance]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort(
+      (a, b) =>
+        new Date(b.date) - new Date(a.date)
+    )
     .slice(0, 5);
 
   return (
@@ -39,9 +41,9 @@ export default function RecentAttendance({
       ) : (
         <div className="divide-y divide-slate-100">
           {recentAttendance.map((record) => {
-            const course = sectionMap[record.course_section_id];
-
-            const isPresent = record.status === "present";
+            const isPresent =
+              record.status?.toUpperCase() ===
+              "PRESENT";
 
             return (
               <div
@@ -50,15 +52,27 @@ export default function RecentAttendance({
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-800">
-                    {course?.subject_name || "Unknown Course"}
+                    {record.subject_name ||
+                      "Unknown Course"}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-400">
-                    {new Date(record.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {record.subject_code && (
+                      <>
+                        {record.subject_code} ·{" "}
+                      </>
+                    )}
+
+                    {new Date(
+                      record.date
+                    ).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )}
                   </p>
                 </div>
 

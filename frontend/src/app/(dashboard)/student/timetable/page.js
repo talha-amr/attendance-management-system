@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useContext } from "react";
@@ -14,7 +15,6 @@ const days = [
 export default function StudentTimetable() {
   const {
     timetable,
-    enrollments,
     loading,
     error,
     refreshStudentData,
@@ -49,32 +49,12 @@ export default function StudentTimetable() {
     );
   }
 
-  /*
-   * Maps course_section_id to enrollment information.
-   *
-   * This lets us turn:
-   *
-   * course_section_id: 1
-   *
-   * into:
-   *
-   * Database Systems
-   * CS-301
-   * Section A
-   * Ali Ahmed
-   */
-  const sectionMap = Object.fromEntries(
-    enrollments.map((enrollment) => [
-      enrollment.course_section_id,
-      enrollment,
-    ])
-  );
-
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
+
         <section>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
             Schedule
@@ -90,14 +70,18 @@ export default function StudentTimetable() {
         </section>
 
         {/* Weekly Schedule */}
+
         <div className="mt-8 space-y-4">
           {days.map((day) => {
             const daySchedule = timetable
               .filter(
-                (item) => item.day_of_week === day
+                (item) =>
+                  item.day_of_week?.toLowerCase() === day
               )
               .sort((a, b) =>
-                a.start_time.localeCompare(b.start_time)
+                a.start_time.localeCompare(
+                  b.start_time
+                )
               );
 
             return (
@@ -106,6 +90,7 @@ export default function StudentTimetable() {
                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
               >
                 {/* Day Header */}
+
                 <div className="border-b border-slate-100 px-5 py-4">
                   <h2 className="font-semibold text-slate-900">
                     {day.charAt(0).toUpperCase() +
@@ -114,6 +99,7 @@ export default function StudentTimetable() {
                 </div>
 
                 {/* Day Schedule */}
+
                 <div className="p-5">
                   {daySchedule.length === 0 ? (
                     <p className="text-sm text-slate-400">
@@ -121,63 +107,60 @@ export default function StudentTimetable() {
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {daySchedule.map((item) => {
-                        const course =
-                          sectionMap[item.course_section_id];
+                      {daySchedule.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex flex-col gap-3 rounded-xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          {/* Course Information */}
 
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex flex-col gap-3 rounded-xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            {/* Course Information */}
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">
-                                {course?.subject_name ||
-                                  "Unknown Course"}
-                              </p>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {item.subject_name ||
+                                "Unknown Course"}
+                            </p>
 
-                              <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500">
-                                {course?.subject_code && (
+                            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500">
+                              {item.subject_code && (
+                                <span>
+                                  {item.subject_code}
+                                </span>
+                              )}
+
+                              {item.section_name && (
+                                <>
+                                  <span>•</span>
+
                                   <span>
-                                    {course.subject_code}
+                                    Section{" "}
+                                    {item.section_name}
                                   </span>
-                                )}
+                                </>
+                              )}
 
-                                {course?.section_name && (
-                                  <>
-                                    <span>•</span>
+                              {item.teacher_name && (
+                                <>
+                                  <span>•</span>
 
-                                    <span>
-                                      Section{" "}
-                                      {course.section_name}
-                                    </span>
-                                  </>
-                                )}
-
-                                {course?.teacher_name && (
-                                  <>
-                                    <span>•</span>
-
-                                    <span>
-                                      {course.teacher_name}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Time */}
-                            <div className="shrink-0">
-                              <p className="text-sm font-semibold text-indigo-600">
-                                {item.start_time.slice(0, 5)}
-                                {" — "}
-                                {item.end_time.slice(0, 5)}
-                              </p>
+                                  <span>
+                                    {item.teacher_name}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
+
+                          {/* Time */}
+
+                          <div className="shrink-0">
+                            <p className="text-sm font-semibold text-indigo-600">
+                              {item.start_time.slice(0, 5)}
+                              {" — "}
+                              {item.end_time.slice(0, 5)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

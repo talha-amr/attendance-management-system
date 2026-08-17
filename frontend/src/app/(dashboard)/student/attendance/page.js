@@ -3,134 +3,82 @@
 import { useState } from "react";
 import { useStudent } from "@/context/StudentContext";
 
-export default function StudentAttendance() {
+export default function AttendancePage() {
   const {
-    attendance,
     enrollments,
+    attendance,
     loading,
     error,
+    refreshStudentData,
     refreshAttendance,
-    getAttendanceBySection,
   } = useStudent();
 
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [courseAttendance, setCourseAttendance] = useState([]);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [selectedCourse, setSelectedCourse] =
+    useState(null);
 
-  // ==========================================
-  // OVERALL ATTENDANCE
-  // ==========================================
+  const loadingData = loading;
 
-  const present = attendance.filter(
-    (item) => item.status === "present"
+  const selectedAttendance = selectedCourse
+    ? attendance.filter(
+        (record) =>
+          record.course_section_id ===
+          selectedCourse.course_section_id
+      )
+    : [];
+
+  const presentCount = selectedAttendance.filter(
+    (record) =>
+      record.status?.toUpperCase() === "PRESENT"
   ).length;
 
-  const absent = attendance.filter(
-    (item) => item.status === "absent"
+  const absentCount = selectedAttendance.filter(
+    (record) =>
+      record.status?.toUpperCase() === "ABSENT"
   ).length;
 
-  const percentage =
-    attendance.length > 0
-      ? Math.round((present / attendance.length) * 100)
+  const totalCount = selectedAttendance.length;
+
+  const attendancePercentage =
+    totalCount > 0
+      ? Math.round(
+          (presentCount / totalCount) * 100
+        )
       : 0;
 
-  // ==========================================
-  // GET ATTENDANCE FOR A COURSE FROM
-  // CURRENT OVERALL ATTENDANCE
-  // ==========================================
-
-  function getCourseStats(sectionId) {
-    const records = attendance.filter(
-      (item) => item.course_section_id === sectionId
-    );
-
-    const coursePresent = records.filter(
-      (item) => item.status === "present"
-    ).length;
-
-    const courseAbsent = records.filter(
-      (item) => item.status === "absent"
-    ).length;
-
-    const coursePercentage =
-      records.length > 0
-        ? Math.round(
-            (coursePresent / records.length) * 100
-          )
-        : 0;
-
-    return {
-      present: coursePresent,
-      absent: courseAbsent,
-      percentage: coursePercentage,
-    };
-  }
-
-  // ==========================================
-  // OPEN COURSE DETAILS
-  // ==========================================
-
-  async function handleViewDetails(course) {
-    setSelectedCourse(course);
-    setCourseAttendance([]);
-    setModalError("");
-    setModalLoading(true);
-
-    try {
-      const data = await getAttendanceBySection(
-        course.course_section_id
-      );
-
-      setCourseAttendance(data);
-    } catch (err) {
-      setModalError(
-        err.message || "Failed to load course attendance."
-      );
-    } finally {
-      setModalLoading(false);
-    }
-  }
-
-  // ==========================================
-  // CLOSE MODAL
-  // ==========================================
-
-  function closeModal() {
-    setSelectedCourse(null);
-    setCourseAttendance([]);
-    setModalError("");
-  }
-
-  // ==========================================
-  // LOADING
-  // ==========================================
-
-  if (loading) {
+  if (loadingData) {
     return (
       <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-100">
-        <p className="text-sm text-slate-500">
-          Loading attendance...
-        </p>
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
+
+          <p className="mt-4 text-sm font-medium text-slate-500">
+            Loading attendance...
+          </p>
+        </div>
       </main>
     );
   }
 
-  // ==========================================
-  // ERROR
-  // ==========================================
-
   if (error) {
     return (
-      <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-100">
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
-          <p className="text-sm text-red-600">
+      <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-100 px-4">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-6 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Something went wrong
+          </h2>
+
+          <p className="mt-2 text-sm text-red-600">
             {error}
           </p>
 
           <button
-            onClick={refreshAttendance}
-            className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            onClick={async () => {
+              await Promise.all([
+                refreshStudentData(),
+                refreshAttendance(),
+              ]);
+            }}
+            className="mt-5 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Try Again
           </button>
@@ -140,59 +88,36 @@ export default function StudentAttendance() {
   }
 
   return (
-    <>
-      <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
 
-          {/* Header */}
+        {/* Header */}
 
+        <section>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+            Student Attendance
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Attendance
+          </h1>
+
+          <p className="mt-2 text-sm text-slate-500">
+            View your attendance records for each enrolled course.
+          </p>
+        </section>
+
+        {/* Course List */}
+
+        {!selectedCourse ? (
           <section>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
-              Academics
-            </p>
-
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">
-              Attendance
-            </h1>
-
-            <p className="mt-2 text-sm text-slate-500">
-              View your complete attendance record.
-            </p>
-          </section>
-
-          {/* Overall Stats */}
-
-          <section className="mt-8 grid gap-4 sm:grid-cols-3">
-
-            <Stat
-              label="Total Records"
-              value={attendance.length}
-            />
-
-            <Stat
-              label="Present"
-              value={present}
-              valueClass="text-emerald-600"
-            />
-
-            <Stat
-              label="Attendance"
-              value={`${percentage}%`}
-            />
-
-          </section>
-
-          {/* Course Attendance */}
-
-          <section className="mt-8">
-
             <div className="mb-4">
-              <h2 className="font-semibold text-slate-900">
-                Course Attendance
+              <h2 className="text-xl font-bold text-slate-900">
+                My Courses
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                View attendance for each enrolled course.
+                Select a course to view its attendance.
               </p>
             </div>
 
@@ -203,315 +128,247 @@ export default function StudentAttendance() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {enrollments.map((course) => {
-                  const stats = getCourseStats(
-                    course.course_section_id
-                  );
+                  const courseAttendance =
+                    attendance.filter(
+                      (record) =>
+                        record.course_section_id ===
+                        course.course_section_id
+                    );
+
+                  const present = courseAttendance.filter(
+                    (record) =>
+                      record.status?.toUpperCase() ===
+                      "PRESENT"
+                  ).length;
+
+                  const total =
+                    courseAttendance.length;
+
+                  const percentage =
+                    total > 0
+                      ? Math.round(
+                          (present / total) * 100
+                        )
+                      : 0;
 
                   return (
-                    <CourseCard
+                    <button
                       key={course.course_section_id}
-                      course={course}
-                      stats={stats}
-                      onViewDetails={() =>
-                        handleViewDetails(course)
+                      onClick={() =>
+                        setSelectedCourse(course)
                       }
-                    />
+                      className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
+                          {course.subject_code?.slice(
+                            0,
+                            2
+                          ) || "CO"}
+                        </div>
+
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
+                          Section {course.section_name}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-5 line-clamp-2 text-sm font-bold text-slate-900">
+                        {course.subject_name}
+                      </h3>
+
+                      <p className="mt-1 text-xs font-medium text-slate-400">
+                        {course.subject_code}
+                      </p>
+
+                      <div className="mt-5 border-t border-slate-100 pt-4">
+                        <div className="flex items-end justify-between">
+                          <div>
+                            <p className="text-xs text-slate-400">
+                              Attendance
+                            </p>
+
+                            <p className="mt-1 text-lg font-bold text-slate-800">
+                              {percentage}%
+                            </p>
+                          </div>
+
+                          <p className="text-xs text-slate-400">
+                            {present}/{total} present
+                          </p>
+                        </div>
+                      </div>
+                    </button>
                   );
                 })}
-
               </div>
             )}
-
           </section>
-        </div>
-      </main>
+        ) : (
+          <>
+            {/* Back */}
 
-      {/* Attendance Modal */}
+            <button
+              onClick={() =>
+                setSelectedCourse(null)
+              }
+              className="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+            >
+              ← Back to courses
+            </button>
 
-      {selectedCourse && (
-        <AttendanceModal
-          course={selectedCourse}
-          attendance={courseAttendance}
-          loading={modalLoading}
-          error={modalError}
-          onClose={closeModal}
-        />
-      )}
-    </>
-  );
-}
+            {/* Course Header */}
 
-// ==========================================
-// STAT
-// ==========================================
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                    {selectedCourse.subject_code}
+                  </p>
 
-function Stat({
-  label,
-  value,
-  valueClass = "text-slate-900",
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h2 className="mt-1 text-2xl font-bold text-slate-900">
+                    {selectedCourse.subject_name}
+                  </h2>
 
-      <p className="text-sm text-slate-500">
-        {label}
-      </p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Section {selectedCourse.section_name}
+                    {" · "}
+                    {selectedCourse.teacher_name}
+                  </p>
+                </div>
 
-      <p
-        className={`mt-2 text-2xl font-bold ${valueClass}`}
-      >
-        {value}
-      </p>
-
-    </div>
-  );
-}
-
-// ==========================================
-// COURSE CARD
-// ==========================================
-
-function CourseCard({
-  course,
-  stats,
-  onViewDetails,
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
-      <div className="flex items-start justify-between gap-4">
-
-        <div>
-          <h3 className="font-semibold text-slate-900">
-            {course.subject_name}
-          </h3>
-
-          <p className="mt-1 text-xs text-slate-500">
-            {course.subject_code} · Section{" "}
-            {course.section_name}
-          </p>
-
-          <p className="mt-1 text-xs text-slate-400">
-            {course.teacher_name}
-          </p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-2xl font-bold text-slate-900">
-            {stats.percentage}%
-          </p>
-
-          <p className="text-xs text-slate-500">
-            Attendance
-          </p>
-        </div>
-
-      </div>
-
-      {/* Present / Absent */}
-
-      <div className="mt-5 grid grid-cols-2 gap-3">
-
-        <div className="rounded-xl bg-emerald-50 p-3">
-          <p className="text-xs text-emerald-600">
-            Present
-          </p>
-
-          <p className="mt-1 text-lg font-bold text-emerald-700">
-            {stats.present}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-red-50 p-3">
-          <p className="text-xs text-red-600">
-            Absent
-          </p>
-
-          <p className="mt-1 text-lg font-bold text-red-700">
-            {stats.absent}
-          </p>
-        </div>
-
-      </div>
-
-      <button
-        onClick={onViewDetails}
-        className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-      >
-        View Attendance
-      </button>
-
-    </div>
-  );
-}
-
-// ==========================================
-// ATTENDANCE MODAL
-// ==========================================
-
-function AttendanceModal({
-  course,
-  attendance,
-  loading,
-  error,
-  onClose,
-}) {
-  const present = attendance.filter(
-    (item) => item.status === "present"
-  ).length;
-
-  const absent = attendance.filter(
-    (item) => item.status === "absent"
-  ).length;
-
-  const percentage =
-    attendance.length > 0
-      ? Math.round((present / attendance.length) * 100)
-      : 0;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
-        onClick={(event) =>
-          event.stopPropagation()
-        }
-      >
-
-        {/* Header */}
-
-        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-
-          <div>
-            <h2 className="font-semibold text-slate-900">
-              {course.subject_name}
-            </h2>
-
-            <p className="mt-1 text-xs text-slate-500">
-              {course.subject_code} · Section{" "}
-              {course.section_name}
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="rounded-lg px-2 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Close"
-          >
-            ×
-          </button>
-
-        </div>
-
-        {/* Content */}
-
-        <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-5">
-
-          {loading ? (
-            <div className="py-12 text-center">
-              <p className="text-sm text-slate-500">
-                Loading attendance...
-              </p>
-            </div>
-          ) : error ? (
-            <div className="py-12 text-center">
-              <p className="text-sm text-red-600">
-                {error}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Summary */}
-
-              <div className="grid grid-cols-3 gap-3">
-
-                <div className="rounded-xl bg-slate-50 p-3 text-center">
-                  <p className="text-xs text-slate-500">
+                <div className="rounded-xl bg-indigo-50 px-5 py-4 text-center">
+                  <p className="text-xs font-medium text-indigo-500">
                     Attendance
                   </p>
 
-                  <p className="mt-1 text-lg font-bold text-slate-900">
-                    {percentage}%
+                  <p className="mt-1 text-2xl font-bold text-indigo-600">
+                    {attendancePercentage}%
                   </p>
                 </div>
+              </div>
+            </section>
 
-                <div className="rounded-xl bg-emerald-50 p-3 text-center">
-                  <p className="text-xs text-emerald-600">
-                    Present
-                  </p>
+            {/* Stats */}
 
-                  <p className="mt-1 text-lg font-bold text-emerald-700">
-                    {present}
-                  </p>
-                </div>
+            <section className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-medium text-slate-400">
+                  Total Classes
+                </p>
 
-                <div className="rounded-xl bg-red-50 p-3 text-center">
-                  <p className="text-xs text-red-600">
-                    Absent
-                  </p>
-
-                  <p className="mt-1 text-lg font-bold text-red-700">
-                    {absent}
-                  </p>
-                </div>
-
+                <p className="mt-2 text-2xl font-bold text-slate-900">
+                  {totalCount}
+                </p>
               </div>
 
-              {/* History */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-medium text-slate-400">
+                  Present
+                </p>
 
-              <div className="mt-6">
+                <p className="mt-2 text-2xl font-bold text-emerald-600">
+                  {presentCount}
+                </p>
+              </div>
 
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-medium text-slate-400">
+                  Absent
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-red-600">
+                  {absentCount}
+                </p>
+              </div>
+            </section>
+
+            {/* Attendance Records */}
+
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-200 px-6 py-5">
+                <h2 className="text-lg font-bold text-slate-900">
                   Attendance History
-                </h3>
+                </h2>
 
-                {attendance.length === 0 ? (
-                  <div className="rounded-xl bg-slate-50 px-4 py-8 text-center">
-                    <p className="text-sm text-slate-500">
-                      No attendance records available.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
-
-                    {attendance.map((record) => (
-                      <div
-                        key={record.id}
-                        className="flex items-center justify-between px-4 py-3"
-                      >
-
-                        <p className="text-sm font-medium text-slate-800">
-                          {record.date}
-                        </p>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            record.status === "present"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-red-50 text-red-700"
-                          }`}
-                        >
-                          {record.status}
-                        </span>
-
-                      </div>
-                    ))}
-
-                  </div>
-                )}
-
+                <p className="mt-1 text-sm text-slate-500">
+                  Attendance records for this course.
+                </p>
               </div>
-            </>
-          )}
 
-        </div>
+              {selectedAttendance.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-sm text-slate-500">
+                    No attendance records available for this course.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="hidden grid-cols-[1fr_160px_120px] gap-4 border-b border-slate-200 bg-slate-50 px-6 py-3 text-xs font-semibold text-slate-400 sm:grid">
+                    <span>Date</span>
+                    <span>Teacher</span>
+                    <span>Status</span>
+                  </div>
+
+                  {[...selectedAttendance]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.date) -
+                        new Date(a.date)
+                    )
+                    .map((record) => {
+                      const isPresent =
+                        record.status?.toUpperCase() ===
+                        "PRESENT";
+
+                      return (
+                        <div
+                          key={record.id}
+                          className="grid gap-2 border-b border-slate-100 px-6 py-4 last:border-b-0 sm:grid-cols-[1fr_160px_120px] sm:items-center sm:gap-4"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {new Date(
+                                record.date
+                              ).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                              {record.subject_code}
+                            </p>
+                          </div>
+
+                          <p className="text-xs font-medium text-slate-500">
+                            {record.teacher_name ||
+                              "—"}
+                          </p>
+
+                          <span
+                            className={`w-fit rounded-full px-3 py-1 text-[10px] font-bold ${
+                              isPresent
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-red-50 text-red-600"
+                            }`}
+                          >
+                            {record.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
