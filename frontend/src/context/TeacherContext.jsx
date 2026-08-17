@@ -18,7 +18,7 @@ export function TeacherProvider({ children }) {
   const [timetable, setTimetable] = useState([]);
   const [attendance, setAttendance] = useState([]);
 
-  // Students are loaded for the currently selected section.
+  // Students loaded for the currently selected course section.
   const [students, setStudents] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -216,74 +216,59 @@ export function TeacherProvider({ children }) {
    * ==========================================
    * MARK ATTENDANCE
    * ==========================================
-   *
-   * payload example:
-   *
-   * {
-   *   student_id: 5,
-   *   course_section_id: 2,
-   *   date: "2026-08-13",
-   *   status: "PRESENT"
-   * }
    */
 
-async function markAttendance(payload) {
-  const token = getToken();
+  async function markAttendance(payload) {
+    const token = getToken();
 
-  if (!token) return;
+    if (!token) return;
 
-  const response = await fetch(
-    "http://127.0.0.1:8000/teachers/attendance",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
+    const response = await fetch(
+      "http://127.0.0.1:8000/teachers/attendance",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      let message = "Failed to mark attendance.";
+
+      if (typeof data.detail === "string") {
+        message = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        message = data.detail
+          .map((error) => {
+            if (typeof error === "string") {
+              return error;
+            }
+
+            return error.msg || "Invalid attendance data.";
+          })
+          .join(", ");
+      }
+
+      throw new Error(message);
     }
-  );
 
-  const data = await response.json();
+    setAttendance((current) => [
+      ...current,
+      data,
+    ]);
 
-  if (!response.ok) {
-    let message = "Failed to mark attendance.";
-
-    if (typeof data.detail === "string") {
-      message = data.detail;
-    } else if (Array.isArray(data.detail)) {
-      message = data.detail
-        .map((error) => {
-          if (typeof error === "string") {
-            return error;
-          }
-
-          return error.msg || "Invalid attendance data.";
-        })
-        .join(", ");
-    }
-
-    throw new Error(message);
+    return data;
   }
-
-  setAttendance((current) => [
-    ...current,
-    data,
-  ]);
-
-  return data;
-}
 
   /*
    * ==========================================
    * UPDATE ATTENDANCE
    * ==========================================
-   *
-   * payload example:
-   *
-   * {
-   *   status: "ABSENT"
-   * }
    */
 
   async function updateAttendance(attendanceId, payload) {
@@ -312,7 +297,10 @@ async function markAttendance(payload) {
     }
 
     /*
-     * Update only the changed attendance record.
+     * The PATCH endpoint returns the complete
+     * TeacherAttendanceResponse.
+     *
+     * Replace only the updated record.
      */
     setAttendance((current) =>
       current.map((item) =>
@@ -343,10 +331,6 @@ async function markAttendance(payload) {
         return;
       }
 
-      /*
-       * These requests are independent,
-       * so load them together.
-       */
       await Promise.all([
         refreshTeacher(),
         refreshCourseSections(),

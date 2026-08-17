@@ -2,22 +2,28 @@
 
 export default function AttendanceRecord({
   record,
-  studentName,
   onUpdate,
   updating,
 }) {
-  const isPresent =
-    record.status === "PRESENT";
+  const isPresent = record.status === "present";
 
   return (
     <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-sm font-semibold text-slate-900">
-          {studentName ||
+          {record.student_name ||
             `Student #${record.student_id}`}
         </p>
 
         <p className="mt-1 text-xs text-slate-500">
+          {record.student_email}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-500">
+          {record.subject_code} — {record.section_name}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400">
           {record.date}
         </p>
       </div>
@@ -28,7 +34,7 @@ export default function AttendanceRecord({
         onClick={() =>
           onUpdate(
             record.id,
-            isPresent ? "ABSENT" : "PRESENT"
+            isPresent ? "absent" : "present"
           )
         }
         className={`rounded-full px-4 py-1.5 text-xs font-semibold ${

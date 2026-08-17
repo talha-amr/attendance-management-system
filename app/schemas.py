@@ -154,19 +154,21 @@ class StudentEnrollmentResponse(BaseModel):
     enrolled_at: datetime
 
 
-class TeacherCourseSectionResponse(BaseModel):
+class TeacherCourseSectionResponse(BaseModel): 
     course_section_id: int
-    subject_id: int
-    subject_name: str
-    subject_code: str
-    section_name: str
-    semester:int
-    academic_year: int
+    subject_id: int 
+    subject_name: str 
+    subject_code: str 
+    section_name: str 
+    semester: int 
+    academic_year: int 
+    student_count: int
 
-class TeacherStudentResponse(BaseModel):
-    student_id: int
-    name: str
-    email: EmailStr
+class TeacherStudentResponse(BaseModel): 
+    student_id:int 
+    name:str
+    email:EmailStr 
+    enrolled_at:datetime
 
 class AdminStudentEnrollmentResponse(BaseModel):
     student_id: int
@@ -254,3 +256,31 @@ class StudentTimeTableResponse(BaseModel):
     day_of_week: DaysOfWeek
     start_time: time
     end_time: time
+
+
+class TeacherTimeTableResponse(BaseModel):
+    id: int
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    section_name: str
+    semester: int
+    academic_year: int
+    day_of_week: DaysOfWeek
+    start_time: time
+    end_time: time
+
+class TeacherAttendanceResponse(BaseModel):
+    id:int
+    student_id:int
+    student_name:str
+    student_email:EmailStr
+    course_section_id:int
+    subject_id:int
+    subject_name:str
+    subject_code:str
+    section_name:str
+    date:date
+    status:AttendanceStatus
+    marked_at:datetime

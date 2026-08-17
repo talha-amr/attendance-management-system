@@ -27,6 +27,11 @@ export default function TeacherCourseCard({
 
       <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
         <CourseDetail
+          label="Students"
+          value={course.student_count}
+        />
+
+        <CourseDetail
           label="Semester"
           value={course.semester}
         />

@@ -59,12 +59,6 @@ export default function TeacherDashboard() {
 
   const status = teacher.approval_status?.toUpperCase();
 
-  /*
-   * ==========================================
-   * PENDING
-   * ==========================================
-   */
-
   if (status === "PENDING") {
     return (
       <main className="mx-auto min-h-[70vh] max-w-3xl px-4 py-12">
@@ -82,8 +76,8 @@ export default function TeacherDashboard() {
           </h1>
 
           <p className="mx-auto mt-3 max-w-xl text-slate-600">
-            Your teacher registration has been submitted and
-            is waiting for approval from an administrator.
+            Your teacher registration has been submitted and is
+            waiting for approval from an administrator.
           </p>
 
           <div className="mt-6 rounded-xl bg-white px-4 py-3">
@@ -99,12 +93,6 @@ export default function TeacherDashboard() {
       </main>
     );
   }
-
-  /*
-   * ==========================================
-   * REJECTED
-   * ==========================================
-   */
 
   if (status === "REJECTED") {
     return (
@@ -142,18 +130,10 @@ export default function TeacherDashboard() {
     );
   }
 
-  /*
-   * ==========================================
-   * APPROVED
-   * ==========================================
-   */
-
   if (status === "APPROVED") {
     return (
       <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-8">
-
-          {/* Header */}
           <section>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
               Teacher Dashboard
@@ -164,17 +144,19 @@ export default function TeacherDashboard() {
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              View your classes, lectures and attendance
-              activity.
+              View your classes, lectures and attendance activity.
             </p>
           </section>
 
-          {/* Stats */}
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
               label="Assigned Classes"
               value={courseSections.length}
+            />
+
+            <Stat
+              label="Total Students"
+              value={getTotalStudents(courseSections)}
             />
 
             <Stat
@@ -186,21 +168,17 @@ export default function TeacherDashboard() {
               label="Attendance Records"
               value={attendance.length}
             />
-
           </section>
 
-          {/* Classes */}
           <section>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Academics
-                </p>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Academics
+              </p>
 
-                <h2 className="mt-1 text-xl font-bold text-slate-900">
-                  Your Classes
-                </h2>
-              </div>
+              <h2 className="mt-1 text-xl font-bold text-slate-900">
+                Your Classes
+              </h2>
             </div>
 
             {courseSections.length === 0 ? (
@@ -216,42 +194,43 @@ export default function TeacherDashboard() {
                     key={course.course_section_id}
                     className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                   >
-                    <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-                      {course.subject_code}
-                    </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                          {course.subject_code}
+                        </p>
 
-                    <h3 className="mt-2 text-lg font-bold text-slate-900">
-                      {course.subject_name}
-                    </h3>
+                        <h3 className="mt-2 text-lg font-bold text-slate-900">
+                          {course.subject_name}
+                        </h3>
+                      </div>
 
-                    <div className="mt-4 space-y-2 text-sm">
-                      <p className="text-slate-500">
-                        Section:{" "}
-                        <span className="font-semibold text-slate-800">
-                          {course.section_name}
-                        </span>
-                      </p>
+                      <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        Section {course.section_name}
+                      </span>
+                    </div>
 
-                      <p className="text-slate-500">
-                        Semester:{" "}
-                        <span className="font-semibold text-slate-800">
-                          {course.semester}
-                        </span>
-                      </p>
+                    <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
+                      <DashboardDetail
+                        label="Students"
+                        value={course.student_count}
+                      />
 
-                      <p className="text-slate-500">
-                        Academic Year:{" "}
-                        <span className="font-semibold text-slate-800">
-                          {course.academic_year}
-                        </span>
-                      </p>
+                      <DashboardDetail
+                        label="Semester"
+                        value={course.semester}
+                      />
+
+                      <DashboardDetail
+                        label="Academic Year"
+                        value={course.academic_year}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </section>
-
         </div>
       </main>
     );
@@ -280,6 +259,20 @@ function Stat({ label, value }) {
   );
 }
 
+function DashboardDetail({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-sm text-slate-500">
+        {label}
+      </span>
+
+      <span className="text-sm font-semibold text-slate-800">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function getTodayLectures(timetable) {
   const today = new Date()
     .toLocaleDateString("en-US", {
@@ -290,4 +283,11 @@ function getTodayLectures(timetable) {
   return timetable.filter(
     (item) => item.day_of_week === today
   ).length;
+}
+
+function getTotalStudents(courseSections) {
+  return courseSections.reduce(
+    (total, course) => total + (course.student_count || 0),
+    0
+  );
 }

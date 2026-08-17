@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTeacher } from "@/context/TeacherContext";
 
 export default function AttendanceModal({
   open,
@@ -9,6 +10,8 @@ export default function AttendanceModal({
   onClose,
   onSuccess,
 }) {
+  const { markAttendance } = useTeacher();
+
   const [date, setDate] = useState("");
   const [statuses, setStatuses] = useState({});
   const [saving, setSaving] = useState(false);
@@ -51,61 +54,21 @@ export default function AttendanceModal({
       setSaving(true);
       setError("");
 
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        throw new Error("You are not authenticated.");
-      }
-
-      /*
-       * Backend accepts one attendance record
-       * per POST request.
-       *
-       * Therefore we send one request for each
-       * student.
-       */
-
       for (const student of students) {
-        const response = await fetch(
-          "http://127.0.0.1:8000/teachers/attendance",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              course_section_id:
-                course.course_section_id,
-
-              student_id:
-                student.student_id,
-
-              date,
-
-              status:
-                statuses[student.student_id] ||
-                "present",
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.detail ||
-              `Failed to mark attendance for ${student.name}`
-          );
-        }
+        await markAttendance({
+          course_section_id: course.course_section_id,
+          student_id: student.student_id,
+          date,
+          status:
+            statuses[student.student_id] || "present",
+        });
       }
 
       onSuccess();
       onClose();
     } catch (err) {
       setError(
-        err.message ||
-          "Unable to mark attendance."
+        err.message || "Unable to mark attendance."
       );
     } finally {
       setSaving(false);
@@ -137,7 +100,7 @@ export default function AttendanceModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 disabled:opacity-50"
           >
             Close
           </button>
@@ -158,7 +121,8 @@ export default function AttendanceModal({
               onChange={(event) =>
                 setDate(event.target.value)
               }
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+              disabled={saving}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
             />
           </div>
 
@@ -175,8 +139,7 @@ export default function AttendanceModal({
           <div className="mt-6 space-y-3">
             {students.map((student) => {
               const status =
-                statuses[student.student_id] ||
-                "present";
+                statuses[student.student_id] || "present";
 
               return (
                 <div
@@ -198,6 +161,7 @@ export default function AttendanceModal({
                     {/* Present */}
                     <button
                       type="button"
+                      disabled={saving}
                       onClick={() =>
                         changeStatus(
                           student.student_id,
@@ -216,6 +180,7 @@ export default function AttendanceModal({
                     {/* Absent */}
                     <button
                       type="button"
+                      disabled={saving}
                       onClick={() =>
                         changeStatus(
                           student.student_id,
@@ -243,7 +208,11 @@ export default function AttendanceModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={saving || !students.length}
+            disabled={
+              saving ||
+              !students.length ||
+              !date
+            }
             className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving
@@ -256,4 +225,3 @@ export default function AttendanceModal({
     </div>
   );
 }
-

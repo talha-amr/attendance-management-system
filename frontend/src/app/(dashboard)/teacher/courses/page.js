@@ -64,7 +64,6 @@ export default function TeacherCourses() {
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <section>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
             Teaching
@@ -75,12 +74,11 @@ export default function TeacherCourses() {
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            View the course sections assigned to you
-            and their enrolled students.
+            View the course sections assigned to you and their
+            enrolled students.
           </p>
         </section>
 
-        {/* Course Sections */}
         {courseSections.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
             <h2 className="font-semibold text-slate-900">
@@ -88,8 +86,7 @@ export default function TeacherCourses() {
             </h2>
 
             <p className="mt-2 text-sm text-slate-500">
-              You currently have no assigned course
-              sections.
+              You currently have no assigned course sections.
             </p>
           </div>
         ) : (
@@ -105,7 +102,6 @@ export default function TeacherCourses() {
         )}
       </div>
 
-      {/* Students */}
       <TeacherStudentList
         course={selectedCourse}
         students={students}
