@@ -17,6 +17,18 @@ export default function AdminTeachersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
+  /*
+   * Backend returns:
+   *
+   * "pending"
+   * "approved"
+   * "rejected"
+   *
+   * We normalize it to uppercase only for frontend comparisons.
+   */
+  const getStatus = (status) =>
+    status?.toUpperCase() || "";
+
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
       const searchValue = search.trim().toLowerCase();
@@ -28,25 +40,31 @@ export default function AdminTeachersPage() {
 
       const matchesStatus =
         statusFilter === "ALL" ||
-        teacher.approval_status === statusFilter;
+        getStatus(teacher.approval_status) === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [teachers, search, statusFilter]);
 
   const pendingCount = teachers.filter(
-    (teacher) => teacher.approval_status === "PENDING"
+    (teacher) =>
+      getStatus(teacher.approval_status) === "PENDING"
   ).length;
 
   const approvedCount = teachers.filter(
-    (teacher) => teacher.approval_status === "APPROVED"
+    (teacher) =>
+      getStatus(teacher.approval_status) === "APPROVED"
   ).length;
 
   const rejectedCount = teachers.filter(
-    (teacher) => teacher.approval_status === "REJECTED"
+    (teacher) =>
+      getStatus(teacher.approval_status) === "REJECTED"
   ).length;
 
-  const handleStatusChange = async (teacherId, newStatus) => {
+  const handleStatusChange = async (
+    teacherId,
+    newStatus
+  ) => {
     try {
       if (newStatus === "APPROVED") {
         await approveTeacher(teacherId);
@@ -55,11 +73,8 @@ export default function AdminTeachersPage() {
       if (newStatus === "REJECTED") {
         await rejectTeacher(teacherId);
       }
-
-      // Pending cannot be selected from an approved/rejected teacher
-      // because your backend currently has no "set pending" endpoint.
     } catch {
-      // AdminContext already stores the error.
+      // AdminContext already handles the error.
     }
   };
 
@@ -163,25 +178,40 @@ export default function AdminTeachersPage() {
                 type="text"
                 placeholder="Search by name or email..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value)
+              }
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
             >
-              <option value="ALL">All statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
+              <option value="ALL">
+                All statuses
+              </option>
+
+              <option value="PENDING">
+                Pending
+              </option>
+
+              <option value="APPROVED">
+                Approved
+              </option>
+
+              <option value="REJECTED">
+                Rejected
+              </option>
             </select>
           </div>
         </section>
 
-        {/* Error after an action */}
+        {/* Error after action */}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
@@ -205,7 +235,10 @@ export default function AdminTeachersPage() {
 
               <p className="mt-1 text-sm text-slate-500">
                 {filteredTeachers.length} teacher
-                {filteredTeachers.length !== 1 ? "s" : ""} found.
+                {filteredTeachers.length !== 1
+                  ? "s"
+                  : ""}{" "}
+                found.
               </p>
             </div>
           </div>
@@ -269,14 +302,13 @@ function TeacherRow({
   onStatusChange,
 }) {
   const createdDate = teacher.created_at
-    ? new Date(teacher.created_at).toLocaleDateString(
-        "en-US",
-        {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }
-      )
+    ? new Date(
+        teacher.created_at
+      ).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : "—";
 
   return (
@@ -290,7 +322,9 @@ function TeacherRow({
 
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
-            {teacher.name?.charAt(0)?.toUpperCase() || "T"}
+            {teacher.name
+              ?.charAt(0)
+              ?.toUpperCase() || "T"}
           </div>
 
           <div className="min-w-0">
@@ -322,7 +356,10 @@ function TeacherRow({
           status={teacher.approval_status}
           disabled={actionLoading}
           onChange={(value) =>
-            onStatusChange(teacher.teacher_id, value)
+            onStatusChange(
+              teacher.teacher_id,
+              value
+            )
           }
         />
       </div>
@@ -333,7 +370,9 @@ function TeacherRow({
 
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
-            {teacher.name?.charAt(0)?.toUpperCase() || "T"}
+            {teacher.name
+              ?.charAt(0)
+              ?.toUpperCase() || "T"}
           </div>
 
           <div className="min-w-0">
@@ -360,7 +399,10 @@ function TeacherRow({
             status={teacher.approval_status}
             disabled={actionLoading}
             onChange={(value) =>
-              onStatusChange(teacher.teacher_id, value)
+              onStatusChange(
+                teacher.teacher_id,
+                value
+              )
             }
           />
         </div>
@@ -379,21 +421,41 @@ function TeacherStatusSelect({
   disabled,
   onChange,
 }) {
+  /*
+   * Backend returns lowercase values:
+   *
+   * pending
+   * approved
+   * rejected
+   *
+   * The select uses uppercase values because
+   * the rest of this page uses uppercase for
+   * UI comparisons.
+   */
+
+  const normalizedStatus =
+    status?.toUpperCase() || "";
+
   return (
     <div className="relative">
       <select
-        value={status}
+        value={normalizedStatus}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) =>
+          onChange(e.target.value)
+        }
         className={`w-full appearance-none rounded-xl border px-3 py-2.5 pr-9 text-xs font-bold outline-none transition disabled:cursor-not-allowed disabled:opacity-60 ${
-          status === "APPROVED"
+          normalizedStatus === "APPROVED"
             ? "border-emerald-200 bg-emerald-50 text-emerald-700 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-            : status === "REJECTED"
+            : normalizedStatus === "REJECTED"
             ? "border-red-200 bg-red-50 text-red-700 focus:border-red-300 focus:ring-2 focus:ring-red-100"
             : "border-amber-200 bg-amber-50 text-amber-700 focus:border-amber-300 focus:ring-2 focus:ring-amber-100"
         }`}
       >
-        {status === "PENDING" && (
+
+        {/* Only pending teachers can show Pending */}
+
+        {normalizedStatus === "PENDING" && (
           <option value="PENDING">
             Pending
           </option>
@@ -409,22 +471,14 @@ function TeacherStatusSelect({
       </select>
 
       <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-current">
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 1.04l-4.25-4.51a.75.75 0 01.02-1.06z"
-            clipRule="evenodd"
-          />
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z" clipRule="evenodd" />
         </svg>
       </div>
     </div>
   );
 }
+
 
 /* -------------------------------- */
 /* Stat */

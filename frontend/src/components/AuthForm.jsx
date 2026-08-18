@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -67,55 +66,91 @@ export default function AuthForm() {
     try {
       setLoading(true);
 
+      // -----------------------------
+      // LOGIN
+      // -----------------------------
+
       if (isLogin) {
         const loginData = new URLSearchParams();
-        loginData.append("username",formData.email)
-        loginData.append("password",formData.password)
-        const response = await fetch("http://127.0.0.1:8000/auth/login",{
-          method:"POST",
-          headers:{
-            "Content-type": "application/x-www-form-urlencoded"
-          },
-          body: loginData
-        })
-        const data=await response.json()
-        if (response.ok)
-        {
-          localStorage.setItem("access_token", data.access_token)
-          setMessage("Logged In Successfully")
-          router.replace('/dashboard')
 
+        loginData.append("username", formData.email);
+        loginData.append("password", formData.password);
+
+        const response = await fetch(
+          "http://127.0.0.1:8000/auth/login",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: loginData,
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || "Login failed.");
+          return;
         }
 
-        else
-          setError(data.detail)
-        
+        localStorage.setItem("access_token", data.access_token);
 
-        console.log("Login form submitted");
-      } else {
-        const signupData={
-          "name": formData.name,
-          "email":formData.email,
-          "password": formData.password
-        }
-        console.log(signupData)
-       const response= await fetch("http://127.0.0.1:8000/user",{
+        setMessage("Logged In Successfully");
+
+        router.replace("/dashboard");
+
+        return;
+      }
+
+      // -----------------------------
+      // SIGNUP
+      // -----------------------------
+
+      const signupData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      let signupEndpoint = "http://127.0.0.1:8000/user";
+
+      // Teacher signup uses the teacher-specific endpoint.
+      if (signupRole === "teacher") {
+        signupEndpoint = "http://127.0.0.1:8000/teachers/signup";
+      }
+
+      const response = await fetch(signupEndpoint, {
         method: "POST",
         headers: {
-          "Content-type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(signupData)
-       })
-       const data = await response.json()
-       if (response.ok)
-       {
-        setMessage("Email Registered Successfully")
-       }
+        body: JSON.stringify(signupData),
+      });
 
-       else
-        setError(data.detail)
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Registration failed.");
+        return;
       }
+
+      if (signupRole === "teacher") {
+        setMessage(
+          "Teacher account registered successfully. Please wait for administrator approval."
+        );
+      } else {
+        setMessage("Student account registered successfully.");
+      }
+
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch (error) {
+      console.error(error);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -124,6 +159,7 @@ export default function AuthForm() {
 
   const toggleFormMode = () => {
     setIsLogin((previousMode) => !previousMode);
+
     setSignupRole("student");
     setError("");
     setMessage("");
@@ -150,12 +186,14 @@ export default function AuthForm() {
             </h1>
 
             <p className="mt-5 max-w-md leading-7 text-blue-100">
-              A central platform for students, teachers, attendance records, and
-              academic activity.
+              A central platform for students, teachers, attendance records,
+              and academic activity.
             </p>
           </div>
 
-          <p className="text-sm text-blue-100">Attendance Tracking System</p>
+          <p className="text-sm text-blue-100">
+            Attendance Tracking System
+          </p>
         </div>
 
         <div className="px-6 py-10 sm:px-12 lg:px-14 lg:py-14">
@@ -165,7 +203,9 @@ export default function AuthForm() {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {isLogin ? "Sign in to your account" : "Create your account"}
+              {isLogin
+                ? "Sign in to your account"
+                : "Create your account"}
             </h2>
 
             <p className="mt-2 text-sm text-slate-500">
@@ -204,7 +244,9 @@ export default function AuthForm() {
               <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
                 <button
                   type="button"
-                  onClick={() => handleSignupRoleChange("student")}
+                  onClick={() =>
+                    handleSignupRoleChange("student")
+                  }
                   className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
                     signupRole === "student"
                       ? "bg-white text-indigo-700 shadow-sm"
@@ -216,7 +258,9 @@ export default function AuthForm() {
 
                 <button
                   type="button"
-                  onClick={() => handleSignupRoleChange("teacher")}
+                  onClick={() =>
+                    handleSignupRoleChange("teacher")
+                  }
                   className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
                     signupRole === "teacher"
                       ? "bg-white text-indigo-700 shadow-sm"
@@ -235,7 +279,11 @@ export default function AuthForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+            noValidate
+          >
             {!isLogin && (
               <div>
                 <label
@@ -297,7 +345,9 @@ export default function AuthForm() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleInputChange}
-                autoComplete={isLogin ? "current-password" : "new-password"}
+                autoComplete={
+                  isLogin ? "current-password" : "new-password"
+                }
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
               />
             </div>
@@ -352,7 +402,9 @@ export default function AuthForm() {
           </form>
 
           <p className="mt-7 text-center text-sm text-slate-600">
-            {isLogin ? "Don’t have an account?" : "Already have an account?"}
+            {isLogin
+              ? "Don’t have an account?"
+              : "Already have an account?"}
 
             <button
               type="button"

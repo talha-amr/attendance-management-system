@@ -211,11 +211,12 @@ export default function AdminProvider({ children }) {
         body: JSON.stringify(courseData),
       });
 
-      const data = await handleResponse(response);
+    const data = await handleResponse(response);
 
-      setCourseSections((prev) => [...prev, data]);
+    await refreshCourseSections();
 
-      return data;
+    return data;
+
     } catch (err) {
       setError(err.message);
       throw err;

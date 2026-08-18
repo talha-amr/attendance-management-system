@@ -1,6 +1,6 @@
 from fastapi import APIRouter,Depends,status,HTTPException
 from ..database import get_db
-from sqlalchemy.orm import Session,joinedload
+from sqlalchemy.orm import Session,joinedload,aliased
 from ..schemas import AdminStudentResponse, AdminTeacherResponse, SubjectResponse, SubjectCreate, CourseSectionCreate, CourseSectionResponse, AdminCourseSectionResponse, AdminStudentEnrollmentResponse, AdminEnrollmentCreate, EnrollmentResponse, AdminEnrollmentResponse, TimeTableCreate, TimeTableResponse, AdminTimeTableResponse, UpdateAttendance, AttendanceResponse, AdminAttendanceResponse
 from .. import models
 from .. dependencies import require_admin
@@ -329,23 +329,26 @@ def delete_timetable(timetable_id:int,db: Session = Depends(get_db), current_use
     return
 
 @router.get("/attendance", response_model=list[AdminAttendanceResponse])
-def get_all_attendance( section_id: int | None = None, student_id: int | None = None, teacher_id: int | None = None, attendance_date: date | None = None, status: AttendanceStatus | None = None, db: Session = Depends(get_db),curr_admin: models.User = Depends(require_admin)):
-    attendance_query = (db.query(models.Attendance) .join(models.Attendance.course_section) .join(models.Attendance.student) .join(models.Student.user) .join(models.CourseSection.subject) .join(models.CourseSection.teacher).join(models.Teacher.user) )
+def get_all_attendance(section_id: int | None = None, student_id: int | None = None, teacher_id: int | None = None, attendance_date: date | None = None, status: AttendanceStatus | None = None, db: Session = Depends(get_db), curr_admin: models.User = Depends(require_admin)):
+    student_user = aliased(models.User)
+    teacher_user = aliased(models.User)
+
+    attendance_query = (db.query(models.Attendance) .join(models.Attendance.course_section) .join(models.Attendance.student) .join(student_user, models.Student.user) .join(models.CourseSection.subject) .join(models.CourseSection.teacher) .join(teacher_user, models.Teacher.user))
 
     if section_id:
-        attendance_query = attendance_query.filter( models.Attendance.course_section_id == section_id)
+        attendance_query = attendance_query.filter(models.Attendance.course_section_id == section_id)
 
     if student_id:
-        attendance_query = attendance_query.filter( models.Attendance.student_id == student_id )
+        attendance_query = attendance_query.filter(models.Attendance.student_id == student_id)
 
     if teacher_id:
         attendance_query = attendance_query.filter(models.CourseSection.teacher_id == teacher_id)
 
     if attendance_date:
-        attendance_query = attendance_query.filter( models.Attendance.date == attendance_date)
+        attendance_query = attendance_query.filter(models.Attendance.date == attendance_date)
 
     if status:
-        attendance_query = attendance_query.filter( models.Attendance.status == status)
+        attendance_query = attendance_query.filter(models.Attendance.status == status)
 
     attendance = attendance_query.all()
 
@@ -371,10 +374,12 @@ def get_all_attendance( section_id: int | None = None, student_id: int | None = 
 
 
 @router.patch("/attendance/{attendance_id}", response_model=AdminAttendanceResponse)
-def update_attendance( attendance_id: int, payload: UpdateAttendance, db: Session = Depends(get_db), curr_admin: models.User = Depends(require_admin)):
+def update_attendance(attendance_id: int, payload: UpdateAttendance, db: Session = Depends(get_db), curr_admin: models.User = Depends(require_admin)):
+    student_user = aliased(models.User)
+    teacher_user = aliased(models.User)
+
     attendance = (
-        db.query(models.Attendance) .join(models.Attendance.course_section) .join(models.Attendance.student) .join(models.Student.user) .join(models.CourseSection.subject) .join(models.CourseSection.teacher)
-        .join(models.Teacher.user)
+        db.query(models.Attendance) .join(models.Attendance.course_section) .join(models.Attendance.student) .join(student_user, models.Student.user) .join(models.CourseSection.subject) .join(models.CourseSection.teacher) .join(teacher_user, models.Teacher.user)
         .filter(models.Attendance.id == attendance_id)
         .first()
     )
