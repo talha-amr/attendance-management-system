@@ -8,6 +8,7 @@ import AttendanceRecord from "@/components/teacher/AttendanceRecord";
 export default function TeacherAttendance() {
   const {
     courseSections,
+    timetable,
     attendance,
     loading,
     error,
@@ -45,13 +46,61 @@ export default function TeacherAttendance() {
     }
   }
 
+  /*
+   * ==========================================
+   * TODAY
+   * ==========================================
+   */
+
+  const today = new Date();
+
+  const todayDay = today
+    .toLocaleDateString("en-US", {
+      weekday: "long",
+    })
+    .toLowerCase();
+
+  const formattedToday = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  /*
+   * ==========================================
+   * SELECTED COURSE'S TODAY'S TIMETABLE
+   * ==========================================
+   */
+
+  const todayTimetable = selectedCourse
+    ? timetable.filter(
+        (item) =>
+          item.course_section_id ===
+            selectedCourse.course_section_id &&
+          item.day_of_week?.toLowerCase() === todayDay
+      )
+    : [];
+
+  const hasTodayClass = todayTimetable.length > 0;
+
   function openAttendance() {
-    if (!selectedCourse || !students.length) {
+    if (
+      !selectedCourse ||
+      !students.length ||
+      !hasTodayClass
+    ) {
       return;
     }
 
     setShowModal(true);
   }
+
+  /*
+   * ==========================================
+   * UPDATE ATTENDANCE
+   * ==========================================
+   */
 
   async function handleUpdateAttendance(attendanceId, status) {
     try {
@@ -69,6 +118,128 @@ export default function TeacherAttendance() {
       setUpdatingId(null);
     }
   }
+
+  /*
+   * ==========================================
+   * DATE HELPERS
+   * ==========================================
+   */
+
+  function getDateKey(dateString) {
+    return dateString;
+  }
+
+  function getLocalDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function getDateLabel(dateString) {
+    const recordDate = new Date(
+      `${dateString}T00:00:00`
+    );
+
+    const todayDate = new Date();
+    const yesterdayDate = new Date();
+
+    yesterdayDate.setDate(
+      yesterdayDate.getDate() - 1
+    );
+
+    const recordKey = getLocalDateKey(recordDate);
+    const todayKey = getLocalDateKey(todayDate);
+    const yesterdayKey =
+      getLocalDateKey(yesterdayDate);
+
+    if (recordKey === todayKey) {
+      return "Today";
+    }
+
+    if (recordKey === yesterdayKey) {
+      return "Yesterday";
+    }
+
+    return recordDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  /*
+   * ==========================================
+   * LAST 7 DAYS ATTENDANCE
+   *
+   * Important:
+   * We are NOT assuming there was a lecture
+   * every day.
+   *
+   * We simply show attendance records that
+   * actually exist within the last 7 days.
+   * ==========================================
+   */
+
+  const sevenDaysAgo = new Date();
+
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+  sevenDaysAgo.setDate(
+    sevenDaysAgo.getDate() - 6
+  );
+
+  const recentAttendance = attendance.filter(
+    (record) => {
+      const recordDate = new Date(
+        `${record.date}T00:00:00`
+      );
+
+      recordDate.setHours(0, 0, 0, 0);
+
+      return recordDate >= sevenDaysAgo;
+    }
+  );
+
+  /*
+   * ==========================================
+   * GROUP ATTENDANCE BY DATE
+   * ==========================================
+   */
+
+  const attendanceByDate =
+    recentAttendance.reduce(
+      (groups, record) => {
+        const key = getDateKey(record.date);
+
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+
+        groups[key].push(record);
+
+        return groups;
+      },
+      {}
+    );
+
+  /*
+   * Sort newest date first.
+   */
+
+  const attendanceDates = Object.keys(
+    attendanceByDate
+  ).sort((a, b) => b.localeCompare(a));
+
+  /*
+   * ==========================================
+   * LOADING / ERROR
+   * ==========================================
+   */
 
   if (loading) {
     return (
@@ -95,6 +266,7 @@ export default function TeacherAttendance() {
       <div className="mx-auto max-w-7xl">
 
         {/* Header */}
+
         <section>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
             Teaching
@@ -105,11 +277,13 @@ export default function TeacherAttendance() {
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Mark and manage attendance for your course sections.
+            Mark and manage attendance for your course
+            sections.
           </p>
         </section>
 
         {/* Course Sections */}
+
         <section className="mt-8 grid gap-5 lg:grid-cols-3">
           {courseSections.map((course) => {
             const selected =
@@ -120,7 +294,9 @@ export default function TeacherAttendance() {
               <button
                 key={course.course_section_id}
                 type="button"
-                onClick={() => loadStudents(course)}
+                onClick={() =>
+                  loadStudents(course)
+                }
                 className={`rounded-2xl border bg-white p-5 text-left shadow-sm transition ${
                   selected
                     ? "border-indigo-500 ring-2 ring-indigo-100"
@@ -148,10 +324,12 @@ export default function TeacherAttendance() {
         </section>
 
         {/* Selected Course */}
+
         {selectedCourse && (
           <section className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
             {/* Course Header */}
+
             <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
@@ -171,22 +349,95 @@ export default function TeacherAttendance() {
                 type="button"
                 onClick={openAttendance}
                 disabled={
-                  studentsLoading || !students.length
+                  studentsLoading ||
+                  !students.length ||
+                  !hasTodayClass
                 }
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="shrink-0 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark Attendance
               </button>
             </div>
 
+            {/* Today's Class */}
+
+            <div className="border-b border-slate-200 bg-slate-50 px-5 py-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Today&apos;s Class
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {formattedToday}
+                  </p>
+                </div>
+
+                {hasTodayClass ? (
+                  <div className="flex flex-wrap gap-3">
+                    {todayTimetable.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-green-500" />
+
+                          <p className="text-sm font-semibold text-slate-900">
+                            {item.day_of_week
+                              ?.charAt(0)
+                              .toUpperCase() +
+                              item.day_of_week?.slice(1)}
+                          </p>
+                        </div>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                          {item.start_time?.slice(0, 5)} -{" "}
+                          {item.end_time?.slice(0, 5)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-amber-800">
+                      No class scheduled today
+                    </p>
+
+                    <p className="mt-1 text-xs text-amber-700">
+                      Attendance cannot be marked for this
+                      course today.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Existing Attendance */}
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h3 className="font-semibold text-slate-900">
-                Existing Attendance
-              </h3>
+
+            <div className="border-b border-slate-200 px-5 py-5">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h3 className="font-semibold text-slate-900">
+                    Recent Attendance
+                  </h3>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    Attendance records from the last 7 days.
+                  </p>
+                </div>
+
+                {recentAttendance.length > 0 && (
+                  <p className="text-xs font-medium text-slate-400">
+                    {recentAttendance.length} records
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Loading Students */}
+
             {studentsLoading && (
               <div className="px-5 py-10 text-center">
                 <p className="text-sm text-slate-500">
@@ -196,6 +447,7 @@ export default function TeacherAttendance() {
             )}
 
             {/* Student Error */}
+
             {studentsError && (
               <div className="m-5 rounded-xl bg-red-50 p-4">
                 <p className="text-sm text-red-600">
@@ -204,30 +456,72 @@ export default function TeacherAttendance() {
               </div>
             )}
 
-            {/* No Attendance */}
+            {/* No Recent Attendance */}
+
             {!studentsLoading &&
               !studentsError &&
-              attendance.length === 0 && (
+              recentAttendance.length === 0 && (
                 <div className="px-5 py-10 text-center">
-                  <p className="text-sm text-slate-500">
-                    No attendance records have been marked
-                    for this course yet.
+                  <p className="text-sm font-medium text-slate-700">
+                    No attendance records in the last 7 days.
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Attendance will appear here after it is
+                    marked.
                   </p>
                 </div>
               )}
 
-            {/* Attendance Records */}
+            {/* Attendance By Date */}
+
             {!studentsLoading &&
               !studentsError &&
-              attendance.length > 0 && (
+              attendanceDates.length > 0 && (
                 <div>
-                  {attendance.map((record) => (
-                    <AttendanceRecord
-                      key={record.id}
-                      record={record}
-                      updating={updatingId === record.id}
-                      onUpdate={handleUpdateAttendance}
-                    />
+                  {attendanceDates.map((date) => (
+                    <section
+                      key={date}
+                      className="border-b border-slate-100 last:border-b-0"
+                    >
+                      {/* Date Header */}
+
+                      <div className="flex items-center justify-between bg-slate-50 px-5 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            {getDateLabel(date)}
+                          </p>
+
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            {date}
+                          </p>
+                        </div>
+
+                        <p className="text-xs font-medium text-slate-400">
+                          {attendanceByDate[date].length}{" "}
+                          records
+                        </p>
+                      </div>
+
+                      {/* Records */}
+
+                      <div>
+                        {attendanceByDate[date].map(
+                          (record) => (
+                            <AttendanceRecord
+                              key={record.id}
+                              record={record}
+                              updating={
+                                updatingId === record.id
+                              }
+                              onUpdate={
+                                handleUpdateAttendance
+                              }
+                            />
+                          )
+                        )}
+                      </div>
+                    </section>
                   ))}
                 </div>
               )}
@@ -236,14 +530,13 @@ export default function TeacherAttendance() {
       </div>
 
       {/* Mark Attendance Modal */}
+
       <AttendanceModal
         open={showModal}
         course={selectedCourse}
         students={students}
         onClose={() => setShowModal(false)}
         onSuccess={async () => {
-          setShowModal(false);
-
           await refreshAttendance(
             selectedCourse?.course_section_id
           );

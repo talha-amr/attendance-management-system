@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState,useEffect } from "react";
 import { AdminContext } from "@/context/AdminContext";
 
 export default function AdminTeachersPage() {
@@ -12,8 +12,17 @@ export default function AdminTeachersPage() {
     refreshTeachers,
     approveTeacher,
     rejectTeacher,
+    setError
   } = useContext(AdminContext);
+  useEffect(() => {
 
+      return () => {
+
+          setError(null);
+
+      };
+
+  }, []); 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 

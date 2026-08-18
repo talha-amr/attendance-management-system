@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState ,useEffect} from "react";
 import { AdminContext } from "@/context/AdminContext";
 
 export default function AdminStudents() {
@@ -8,8 +8,17 @@ export default function AdminStudents() {
     students,
     loading,
     error,
+    setError
   } = useContext(AdminContext);
+useEffect(() => {
 
+    return () => {
+
+        setError(null);
+
+    };
+
+}, []); 
   const [search, setSearch] = useState("");
 
   const filteredStudents = useMemo(() => {

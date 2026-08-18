@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState ,useEffect} from "react";
 import { AdminContext } from "@/context/AdminContext";
 import SubjectModal from "@/components/admin/SubjectModal";
 
@@ -11,8 +11,17 @@ export default function AdminSubjects() {
     actionLoading,
     error,
     createSubject,
+    setError
   } = useContext(AdminContext);
+useEffect(() => {
 
+    return () => {
+
+        setError(null);
+
+    };
+
+}, []); 
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 

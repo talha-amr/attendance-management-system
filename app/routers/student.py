@@ -13,34 +13,79 @@ def get_student(curr_student:models.Student= Depends(require_student_profile)):
     return curr_student
 
 @router.post('/me/enrollments',response_model=EnrollmentResponse)
-def enroll_student(payload:EnrollmentCreate,db:Session=Depends(get_db),curr_student:models.Student= Depends(require_student_profile),):
-    course_section= db.query(models.CourseSection).filter(models.CourseSection.id==payload.course_section_id).first()
-    if not course_section: 
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course At this Section Not Found! ")
-    enrollment_check=db.query(models.Enrollment).filter(models.Enrollment.student_id==curr_student.id,models.Enrollment.course_section_id==payload.course_section_id).first()
+def enroll_student(
+    payload:EnrollmentCreate,
+    db:Session=Depends(get_db),
+    curr_student:models.Student=Depends(require_student_profile),
+):
+    course_section=(
+        db.query(models.CourseSection)
+        .filter(models.CourseSection.id==payload.course_section_id)
+        .first()
+    )
+
+    if not course_section:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course At this Section Not Found!"
+        )
+
+    enrollment_check=(
+        db.query(models.Enrollment)
+        .join(models.Enrollment.course_section)
+        .filter(
+            models.Enrollment.student_id==curr_student.id,
+            models.CourseSection.subject_id==course_section.subject_id
+        )
+        .first()
+    )
+
     if enrollment_check:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Already Enrolled")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Already enrolled in this course"
+        )
 
-    student_timetable=db.query(models.TimeTable).join(models.TimeTable.course_section).join(models.CourseSection.enrollments).filter(
-        models.Enrollment.student_id==curr_student.id,
-        models.TimeTable.course_section_id!=payload.course_section_id
-    ).all()
+    student_timetable=(
+        db.query(models.TimeTable)
+        .join(models.TimeTable.course_section)
+        .join(models.CourseSection.enrollments)
+        .filter(
+            models.Enrollment.student_id==curr_student.id,
+            models.TimeTable.course_section_id!=payload.course_section_id
+        )
+        .all()
+    )
 
-    new_course_timetable=db.query(models.TimeTable).filter(
-        models.TimeTable.course_section_id==payload.course_section_id
-    ).all()
+    new_course_timetable=(
+        db.query(models.TimeTable)
+        .filter(
+            models.TimeTable.course_section_id==payload.course_section_id
+        )
+        .all()
+    )
 
     for new_time in new_course_timetable:
         for existing_time in student_timetable:
-            if (new_time.day_of_week==existing_time.day_of_week and
-                new_time.start_time<existing_time.end_time and
-                new_time.end_time>existing_time.start_time):
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Course schedule conflicts with an already enrolled course")
+            if (
+                new_time.day_of_week==existing_time.day_of_week
+                and new_time.start_time<existing_time.end_time
+                and new_time.end_time>existing_time.start_time
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Course schedule conflicts with an already enrolled course"
+                )
 
-    new_enrollment= models.Enrollment(student_id=curr_student.id,course_section_id=payload.course_section_id)
+    new_enrollment=models.Enrollment(
+        student_id=curr_student.id,
+        course_section_id=payload.course_section_id
+    )
+
     db.add(new_enrollment)
     db.commit()
     db.refresh(new_enrollment)
+
     return new_enrollment
 
     

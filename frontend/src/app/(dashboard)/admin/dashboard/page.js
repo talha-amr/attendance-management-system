@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext,useEffect } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import { AdminContext } from "@/context/AdminContext";
 
@@ -25,7 +25,18 @@ export default function AdminDashboard() {
     refreshAdminData,
     approveTeacher,
     rejectTeacher,
+    setError
   } = useContext(AdminContext);
+
+  useEffect(() => {
+
+    return () => {
+
+        setError(null);
+
+    };
+
+}, []); 
 
   const loading = authLoading || adminLoading;
   const error = authError || adminError;

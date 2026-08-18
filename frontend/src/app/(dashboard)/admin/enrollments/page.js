@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useState,useEffect } from "react";
 import { AdminContext } from "@/context/AdminContext";
 import EnrollmentModal from "@/components/admin/EnrollmentModal";
 import SectionStudentsModal from "@/components/admin/SectionStudentsModal";
@@ -17,8 +17,17 @@ export default function AdminEnrollments() {
     enrollStudent,
     fetchSectionStudents,
     deleteEnrollment,
+    setError
   } = useContext(AdminContext);
+useEffect(() => {
 
+    return () => {
+
+        setError(null);
+
+    };
+
+}, []); 
   const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
   const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
 

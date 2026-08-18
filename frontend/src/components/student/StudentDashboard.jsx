@@ -103,22 +103,20 @@ export default function StudentDashboard() {
    * Attendance calculations
    */
 
-  const totalAttendance = attendance.length;
+const totalAttendance = attendance.length;
 
-  const presentAttendance = attendance.filter(
-    (item) => item.status === "PRESENT"
-  ).length;
+const presentAttendance = attendance.filter(
+  (item) => item.status?.toUpperCase() === "PRESENT"
+).length;
 
-  const absentAttendance = attendance.filter(
-    (item) => item.status === "ABSENT"
-  ).length;
+const absentAttendance = attendance.filter(
+  (item) => item.status?.toUpperCase() === "ABSENT"
+).length;
 
-  const attendancePercentage =
-    totalAttendance > 0
-      ? Math.round(
-          (presentAttendance / totalAttendance) * 100
-        )
-      : 0;
+const attendancePercentage =
+  totalAttendance > 0
+    ? Math.round((presentAttendance / totalAttendance) * 100)
+    : 0;
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">

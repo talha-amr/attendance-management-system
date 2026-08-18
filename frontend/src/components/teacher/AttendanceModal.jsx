@@ -25,7 +25,8 @@ export default function AttendanceModal({
     const initialStatuses = {};
 
     students.forEach((student) => {
-      initialStatuses[student.student_id] = "present";
+      initialStatuses[student.student_id] =
+        "present";
     });
 
     setStatuses(initialStatuses);
@@ -56,19 +57,26 @@ export default function AttendanceModal({
 
       for (const student of students) {
         await markAttendance({
-          course_section_id: course.course_section_id,
-          student_id: student.student_id,
+          course_section_id:
+            course.course_section_id,
+
+          student_id:
+            student.student_id,
+
           date,
+
           status:
-            statuses[student.student_id] || "present",
+            statuses[student.student_id] ||
+            "present",
         });
       }
 
-      onSuccess();
+      await onSuccess();
       onClose();
     } catch (err) {
       setError(
-        err.message || "Unable to mark attendance."
+        err.message ||
+          "Unable to mark attendance."
       );
     } finally {
       setSaving(false);
@@ -76,40 +84,47 @@ export default function AttendanceModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6">
+
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
 
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-              {course.subject_code}
-            </p>
 
-            <h2 className="mt-1 text-xl font-bold text-slate-900">
-              Mark Attendance
-            </h2>
+        <div className="shrink-0 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
 
-            <p className="mt-1 text-sm text-slate-500">
-              {course.subject_name} — Section{" "}
-              {course.section_name}
-            </p>
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                {course.subject_code}
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold text-slate-900">
+                Mark Attendance
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                {course.subject_name} — Section{" "}
+                {course.section_name}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+            >
+              Close
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-          >
-            Close
-          </button>
         </div>
 
-        {/* Body */}
-        <div className="max-h-[65vh] overflow-y-auto p-6">
+        {/* Scrollable Body */}
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
 
           {/* Date */}
+
           <div>
             <label className="text-sm font-semibold text-slate-700">
               Attendance Date
@@ -127,38 +142,60 @@ export default function AttendanceModal({
           </div>
 
           {/* Error */}
+
           {error && (
-            <div className="mt-4 rounded-xl bg-red-50 px-4 py-3">
+            <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
               <p className="text-sm text-red-600">
                 {error}
               </p>
             </div>
           )}
 
+          {/* Student count */}
+
+          <div className="mt-6 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Students
+              </h3>
+
+              <p className="mt-1 text-xs text-slate-400">
+                Select present or absent for each student.
+              </p>
+            </div>
+
+            <p className="text-xs font-medium text-slate-400">
+              {students.length} students
+            </p>
+          </div>
+
           {/* Students */}
-          <div className="mt-6 space-y-3">
+
+          <div className="mt-4 space-y-3">
             {students.map((student) => {
               const status =
-                statuses[student.student_id] || "present";
+                statuses[student.student_id] ||
+                "present";
 
               return (
                 <div
                   key={student.student_id}
                   className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900">
                       {student.name}
                     </p>
 
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 truncate text-xs text-slate-500">
                       {student.email}
                     </p>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2">
 
                     {/* Present */}
+
                     <button
                       type="button"
                       disabled={saving}
@@ -171,13 +208,14 @@ export default function AttendanceModal({
                       className={`rounded-lg px-3 py-2 text-xs font-semibold ${
                         status === "present"
                           ? "bg-emerald-600 text-white"
-                          : "bg-white text-slate-600 ring-1 ring-slate-200"
+                          : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
                       }`}
                     >
                       Present
                     </button>
 
                     {/* Absent */}
+
                     <button
                       type="button"
                       disabled={saving}
@@ -190,12 +228,11 @@ export default function AttendanceModal({
                       className={`rounded-lg px-3 py-2 text-xs font-semibold ${
                         status === "absent"
                           ? "bg-red-600 text-white"
-                          : "bg-white text-slate-600 ring-1 ring-slate-200"
+                          : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
                       }`}
                     >
                       Absent
                     </button>
-
                   </div>
                 </div>
               );
@@ -204,7 +241,8 @@ export default function AttendanceModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4">
+
+        <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-4">
           <button
             type="button"
             onClick={handleSubmit}
@@ -220,7 +258,6 @@ export default function AttendanceModal({
               : "Save Attendance"}
           </button>
         </div>
-
       </div>
     </div>
   );

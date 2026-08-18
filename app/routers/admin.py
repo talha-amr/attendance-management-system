@@ -173,6 +173,7 @@ def get_section_students(section_id:int,db:Session=Depends(get_db),current_user=
 @router.post('/enrollments',response_model=AdminEnrollmentResponse,status_code=status.HTTP_201_CREATED)
 def enroll_student(payload:AdminEnrollmentCreate,db:Session=Depends(get_db),current_user=Depends(require_admin)):
     student_check=db.query(models.Student).filter(models.Student.id==payload.student_id).first()
+
     course_section_check=(db.query(models.CourseSection)
         .options(
             joinedload(models.CourseSection.subject),
@@ -187,13 +188,16 @@ def enroll_student(payload:AdminEnrollmentCreate,db:Session=Depends(get_db),curr
     if not course_section_check:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Course not found")
 
-    enrollment_check=db.query(models.Enrollment).filter(
-        models.Enrollment.course_section_id==payload.course_section_id,
-        models.Enrollment.student_id==payload.student_id
-    ).first()
+    enrollment_check=(db.query(models.Enrollment)
+        .join(models.Enrollment.course_section)
+        .filter(
+            models.Enrollment.student_id==payload.student_id,
+            models.CourseSection.subject_id==course_section_check.subject_id
+        )
+        .first())
 
     if enrollment_check:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Student Already Enrolled")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Student is already enrolled in this course")
 
     new_enrollment=models.Enrollment(
         course_section_id=payload.course_section_id,

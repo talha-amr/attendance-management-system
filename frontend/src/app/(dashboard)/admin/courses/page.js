@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo,useEffect, useState } from "react";
 import { AdminContext } from "@/context/AdminContext";
 import CourseModal from "@/components/admin/CourseModal";
 
@@ -13,8 +13,17 @@ export default function AdminCourses() {
     actionLoading,
     error,
     createCourseSection,
+    setError
   } = useContext(AdminContext);
+useEffect(() => {
 
+    return () => {
+
+        setError(null);
+
+    };
+
+}, []); 
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 

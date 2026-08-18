@@ -32,6 +32,7 @@ export default function AdminAttendance() {
 
   useEffect(() => {
     loadAttendance();
+    setError(null);
   }, []);
 
   const getErrorMessage = (err) => {
