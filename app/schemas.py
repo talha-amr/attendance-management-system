@@ -284,3 +284,77 @@ class TeacherAttendanceResponse(BaseModel):
     date:date
     status:AttendanceStatus
     marked_at:datetime
+
+class AdminTeacherResponse(BaseModel):
+    teacher_id: int
+    user_id: int
+    name: str
+    email: EmailStr
+    approval_status: TeacherApprovalStatus
+    created_at: datetime
+
+
+class AdminCourseSectionResponse(BaseModel):
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    teacher_id: int
+    teacher_name: str
+    teacher_email: EmailStr
+    section_name: str
+    semester: int
+    academic_year: int
+    created_at: datetime
+    student_count: int
+
+
+class AdminEnrollmentResponse(BaseModel):
+    student_id: int
+    student_name: str
+    student_email: EmailStr
+    course_section_id: int
+    subject_name: str
+    subject_code: str
+    section_name: str
+    teacher_id: int
+    teacher_name: str
+    semester: int
+    academic_year: int
+    enrolled_at: datetime
+
+
+class AdminTimeTableResponse(BaseModel):
+    id: int
+    course_section_id: int
+    subject_name: str
+    subject_code: str
+    section_name: str
+    teacher_id: int
+    teacher_name: str
+    day_of_week: DaysOfWeek
+    start_time: time
+    end_time: time
+    created_at: datetime
+
+
+class AdminAttendanceResponse(BaseModel):
+    id: int
+    student_id: int
+    student_name: str
+    student_email: EmailStr
+    course_section_id: int
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    section_name: str
+    teacher_id: int
+    teacher_name: str
+    date: date
+    status: AttendanceStatus
+    marked_at: datetime
+    
+class AdminStudentResponse(BaseModel):
+    student_id: int
+    name: str
+    email: EmailStr

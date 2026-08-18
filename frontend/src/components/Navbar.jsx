@@ -20,15 +20,16 @@ const navLinks = {
     { label: "Attendance", href: "/teacher/attendance" },
   ],
 
-  admin: [
-    { label: "Dashboard", href: "/admin/dashboard" },
-    { label: "Students", href: "/admin/students" },
-    { label: "Teachers", href: "/admin/teachers" },
-    { label: "Courses", href: "/admin/courses" },
-    { label: "Enrollments", href: "/admin/enrollments" },
-    { label: "Timetable", href: "/admin/timetable" },
-    { label: "Attendance", href: "/admin/attendance" },
-  ],
+admin: [
+  { label: "Dashboard", href: "/admin/dashboard" },
+  { label: "Students", href: "/admin/students" },
+  { label: "Teachers", href: "/admin/teachers" },
+  { label: "Subjects", href: "/admin/subjects" },
+  { label: "Courses", href: "/admin/courses" },
+  { label: "Enrollments", href: "/admin/enrollments" },
+  { label: "Timetable", href: "/admin/timetable" },
+  { label: "Attendance", href: "/admin/attendance" },
+],
 };
 
 export default function Navbar({ role }) {
