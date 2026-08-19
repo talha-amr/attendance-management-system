@@ -14,7 +14,6 @@ export default function AdminAttendance() {
     refreshAttendance,
     updateAttendance,
     actionLoading,
-    error,
     setError,
   } = useContext(AdminContext);
 
@@ -30,10 +29,11 @@ export default function AdminAttendance() {
   const [editingId, setEditingId] = useState(null);
   const [attendanceError, setAttendanceError] = useState(null);
 
-  useEffect(() => {
-    loadAttendance();
-    setError(null);
-  }, []);
+  /*
+   * ==========================================
+   * ERROR HELPER
+   * ==========================================
+   */
 
   const getErrorMessage = (err) => {
     if (!err) {
@@ -69,6 +69,12 @@ export default function AdminAttendance() {
     return String(err);
   };
 
+  /*
+   * ==========================================
+   * LOAD ATTENDANCE
+   * ==========================================
+   */
+
   const loadAttendance = async (currentFilters = filters) => {
     setLoadingAttendance(true);
     setAttendanceError(null);
@@ -83,6 +89,22 @@ export default function AdminAttendance() {
     }
   };
 
+  /*
+   * ==========================================
+   * INITIAL LOAD
+   * ==========================================
+   */
+
+  useEffect(() => {
+    loadAttendance();
+  }, []);
+
+  /*
+   * ==========================================
+   * FILTER CHANGE
+   * ==========================================
+   */
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -92,9 +114,21 @@ export default function AdminAttendance() {
     }));
   };
 
+  /*
+   * ==========================================
+   * APPLY FILTERS
+   * ==========================================
+   */
+
   const handleApplyFilters = async () => {
     await loadAttendance(filters);
   };
+
+  /*
+   * ==========================================
+   * RESET FILTERS
+   * ==========================================
+   */
 
   const handleResetFilters = async () => {
     const emptyFilters = {
@@ -110,9 +144,19 @@ export default function AdminAttendance() {
     await loadAttendance(emptyFilters);
   };
 
+  /*
+   * ==========================================
+   * CHECK 7 DAY LIMIT
+   * ==========================================
+   */
+
   const isOlderThanSevenDays = (attendanceDate) => {
+    if (!attendanceDate) {
+      return false;
+    }
+
     const today = new Date();
-    const date = new Date(attendanceDate);
+    const date = new Date(`${attendanceDate}T00:00:00`);
 
     today.setHours(0, 0, 0, 0);
     date.setHours(0, 0, 0, 0);
@@ -123,13 +167,25 @@ export default function AdminAttendance() {
     return difference > 7;
   };
 
-  const handleStatusChange = async (attendanceId, newStatus) => {
+  /*
+   * ==========================================
+   * UPDATE ATTENDANCE
+   * ==========================================
+   */
+
+  const handleStatusChange = async (
+    attendanceId,
+    newStatus
+  ) => {
     setEditingId(attendanceId);
     setAttendanceError(null);
     setError(null);
 
     try {
-      await updateAttendance(attendanceId, newStatus);
+      await updateAttendance(
+        attendanceId,
+        newStatus
+      );
     } catch (err) {
       setAttendanceError(getErrorMessage(err));
     } finally {
@@ -137,16 +193,25 @@ export default function AdminAttendance() {
     }
   };
 
+  /*
+   * ==========================================
+   * FORMATTERS
+   * ==========================================
+   */
+
   const formatDate = (date) => {
     if (!date) {
       return "—";
     }
 
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return new Date(`${date}T00:00:00`).toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    );
   };
 
   const formatDateTime = (dateTime) => {
@@ -154,13 +219,16 @@ export default function AdminAttendance() {
       return "—";
     }
 
-    return new Date(dateTime).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return new Date(dateTime).toLocaleString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }
+    );
   };
 
   const formatStatus = (status) => {
@@ -186,8 +254,16 @@ export default function AdminAttendance() {
     return "border-gray-200 bg-gray-50 text-gray-700";
   };
 
+  /*
+   * ==========================================
+   * UI
+   * ==========================================
+   */
+
   return (
     <div className="p-6">
+      {/* Header */}
+
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">
           Attendance
@@ -198,8 +274,13 @@ export default function AdminAttendance() {
         </p>
       </div>
 
+      {/* Filters */}
+
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+          {/* Student */}
+
           <div>
             <label
               htmlFor="student_id"
@@ -215,18 +296,28 @@ export default function AdminAttendance() {
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-400"
             >
-              <option value="">All Students</option>
+              <option value="">
+                All Students
+              </option>
 
               {students.map((student) => (
                 <option
-                  key={student.student_id ?? student.id}
-                  value={student.student_id ?? student.id}
+                  key={
+                    student.student_id ??
+                    student.id
+                  }
+                  value={
+                    student.student_id ??
+                    student.id
+                  }
                 >
                   {student.name}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Course Section */}
 
           <div>
             <label
@@ -243,7 +334,9 @@ export default function AdminAttendance() {
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-400"
             >
-              <option value="">All Course Sections</option>
+              <option value="">
+                All Course Sections
+              </option>
 
               {courseSections.map((course) => (
                 <option
@@ -256,6 +349,8 @@ export default function AdminAttendance() {
               ))}
             </select>
           </div>
+
+          {/* Teacher */}
 
           <div>
             <label
@@ -272,7 +367,9 @@ export default function AdminAttendance() {
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-400"
             >
-              <option value="">All Teachers</option>
+              <option value="">
+                All Teachers
+              </option>
 
               {teachers.map((teacher) => (
                 <option
@@ -284,6 +381,8 @@ export default function AdminAttendance() {
               ))}
             </select>
           </div>
+
+          {/* Date */}
 
           <div>
             <label
@@ -303,6 +402,8 @@ export default function AdminAttendance() {
             />
           </div>
 
+          {/* Status */}
+
           <div>
             <label
               htmlFor="status"
@@ -318,16 +419,23 @@ export default function AdminAttendance() {
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-400"
             >
-              <option value="">All Statuses</option>
+              <option value="">
+                All Statuses
+              </option>
 
               {ATTENDANCE_STATUSES.map((status) => (
-                <option key={status} value={status}>
+                <option
+                  key={status}
+                  value={status}
+                >
                   {formatStatus(status)}
                 </option>
               ))}
             </select>
           </div>
         </div>
+
+        {/* Filter Buttons */}
 
         <div className="mt-6 flex justify-end gap-3">
           <button
@@ -345,10 +453,14 @@ export default function AdminAttendance() {
             disabled={loadingAttendance}
             className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loadingAttendance ? "Loading..." : "Apply Filters"}
+            {loadingAttendance
+              ? "Loading..."
+              : "Apply Filters"}
           </button>
         </div>
       </div>
+
+      {/* Error */}
 
       {attendanceError && (
         <div className="mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-5 py-4">
@@ -364,13 +476,17 @@ export default function AdminAttendance() {
 
           <button
             type="button"
-            onClick={() => setAttendanceError(null)}
+            onClick={() =>
+              setAttendanceError(null)
+            }
             className="ml-4 text-sm font-medium text-red-700 hover:text-red-900"
           >
             Dismiss
           </button>
         </div>
       )}
+
+      {/* Attendance Table */}
 
       <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
         {loadingAttendance ? (
@@ -386,12 +502,16 @@ export default function AdminAttendance() {
             </p>
 
             <p className="mt-1 text-sm text-gray-500">
-              Try changing your filters or check back later.
+              Try changing your filters or check
+              back later.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px]">
+
+              {/* Table Header */}
+
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -420,24 +540,38 @@ export default function AdminAttendance() {
                 </tr>
               </thead>
 
+              {/* Table Body */}
+
               <tbody className="divide-y divide-gray-100">
                 {attendance.map((record) => {
-                  const isOld = isOlderThanSevenDays(record.date);
+                  const isOld =
+                    isOlderThanSevenDays(
+                      record.date
+                    );
+
+                  const isUpdating =
+                    actionLoading &&
+                    editingId === record.id;
 
                   return (
                     <tr
                       key={record.id}
                       className="transition hover:bg-gray-50"
                     >
+                      {/* Student */}
+
                       <td className="px-6 py-4">
                         <p className="text-sm font-medium text-gray-900">
-                          {record.student_name}
+                          {record.student_name ||
+                            `Student #${record.student_id}`}
                         </p>
 
                         <p className="mt-1 text-xs text-gray-500">
                           {record.student_email}
                         </p>
                       </td>
+
+                      {/* Course */}
 
                       <td className="px-6 py-4">
                         <p className="text-sm font-medium text-gray-900">
@@ -449,21 +583,32 @@ export default function AdminAttendance() {
                         </p>
 
                         <p className="mt-1 text-xs text-gray-400">
-                          Section {record.section_name}
+                          Section{" "}
+                          {record.section_name}
                         </p>
                       </td>
+
+                      {/* Teacher */}
 
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {record.teacher_name}
                       </td>
 
+                      {/* Date */}
+
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {formatDate(record.date)}
                       </td>
 
+                      {/* Marked At */}
+
                       <td className="px-6 py-4 text-sm text-gray-700">
-                        {formatDateTime(record.marked_at)}
+                        {formatDateTime(
+                          record.marked_at
+                        )}
                       </td>
+
+                      {/* Status */}
 
                       <td className="px-6 py-4">
                         <div>
@@ -476,9 +621,7 @@ export default function AdminAttendance() {
                               )
                             }
                             disabled={
-                              isOld ||
-                              (actionLoading &&
-                                editingId === record.id)
+                              isOld || isUpdating
                             }
                             title={
                               isOld
@@ -499,7 +642,9 @@ export default function AdminAttendance() {
                                   key={status}
                                   value={status}
                                 >
-                                  {formatStatus(status)}
+                                  {formatStatus(
+                                    status
+                                  )}
                                 </option>
                               )
                             )}
@@ -511,12 +656,11 @@ export default function AdminAttendance() {
                             </p>
                           )}
 
-                          {editingId === record.id &&
-                            actionLoading && (
-                              <p className="mt-1 text-xs text-gray-500">
-                                Updating...
-                              </p>
-                            )}
+                          {isUpdating && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              Updating...
+                            </p>
+                          )}
                         </div>
                       </td>
                     </tr>

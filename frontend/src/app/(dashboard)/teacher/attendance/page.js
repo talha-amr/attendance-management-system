@@ -177,12 +177,9 @@ export default function TeacherAttendance() {
    * ==========================================
    * LAST 7 DAYS ATTENDANCE
    *
-   * Important:
-   * We are NOT assuming there was a lecture
-   * every day.
+   * Matches backend business logic:
    *
-   * We simply show attendance records that
-   * actually exist within the last 7 days.
+   * date >= today - 7 days
    * ==========================================
    */
 
@@ -190,7 +187,7 @@ export default function TeacherAttendance() {
 
   sevenDaysAgo.setHours(0, 0, 0, 0);
   sevenDaysAgo.setDate(
-    sevenDaysAgo.getDate() - 6
+    sevenDaysAgo.getDate() - 7
   );
 
   const recentAttendance = attendance.filter(

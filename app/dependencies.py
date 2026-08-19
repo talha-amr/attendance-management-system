@@ -52,7 +52,7 @@ def require_approved_teacher(current_user: models.Teacher = Depends(require_teac
     if current_user.approval_status != TeacherApprovalStatus.APPROVED:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Teacher approval required"
+            detail="Admin approval required"
         )
 
     return current_user
