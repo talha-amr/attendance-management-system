@@ -11,9 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+frontend_url_clean = settings.frontend_url.rstrip("/")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url],
+    allow_origins=[settings.frontend_url, frontend_url_clean],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
