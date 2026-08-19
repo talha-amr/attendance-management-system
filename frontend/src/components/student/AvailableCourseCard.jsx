@@ -25,7 +25,7 @@ export default function AvailableCourseCard({
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8000/students/me/enrollments",
+        `${process.env.NEXT_PUBLIC_API_URL}/students/me/enrollments`,
         {
           method: "POST",
           headers: {

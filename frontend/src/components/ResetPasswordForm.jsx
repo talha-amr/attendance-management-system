@@ -48,7 +48,7 @@ export default function ResetPasswordForm() {
         "token": url_Token,
         "new_password": formData.password
       }
-      const response= await fetch("http://127.0.0.1:8000/auth/reset-password",{
+      const response= await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password`,{
         method:"POST",
         headers:{
             "content-type":"application/json"

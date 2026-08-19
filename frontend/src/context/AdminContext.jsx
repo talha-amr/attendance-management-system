@@ -19,7 +19,7 @@ export default function AdminProvider({ children }) {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_URL = "http://127.0.0.1:8000"
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const getToken = () => {
     return localStorage.getItem("access_token");

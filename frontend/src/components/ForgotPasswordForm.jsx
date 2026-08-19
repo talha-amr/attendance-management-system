@@ -23,7 +23,7 @@ export default function ForgotPasswordForm() {
       const forgotForm={
         "email":email
       }  
-      const response=await fetch("http://127.0.0.1:8000/auth/forgot-password",{
+      const response=await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`,{
         method:"POST",
         headers:{
             "content-type":"application/json"

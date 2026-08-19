@@ -47,7 +47,7 @@ export function StudentProvider({ children }) {
         timetableResponse,
       ] = await Promise.all([
         fetch(
-          "http://127.0.0.1:8000/students/me/enrollments",
+          `${process.env.NEXT_PUBLIC_API_URL}/students/me/enrollments`,
           {
             method: "GET",
             headers,
@@ -55,7 +55,7 @@ export function StudentProvider({ children }) {
         ),
 
         fetch(
-          "http://127.0.0.1:8000/students/course-sections",
+          `${process.env.NEXT_PUBLIC_API_URL}/students/course-sections`,
           {
             method: "GET",
             headers,
@@ -63,7 +63,7 @@ export function StudentProvider({ children }) {
         ),
 
         fetch(
-          "http://127.0.0.1:8000/students/timetables",
+          `${process.env.NEXT_PUBLIC_API_URL}/students/timetables`,
           {
             method: "GET",
             headers,
@@ -131,7 +131,7 @@ export function StudentProvider({ children }) {
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8000/students/attendance",
+        `${process.env.NEXT_PUBLIC_API_URL}/students/attendance`,
         {
           method: "GET",
           headers: {

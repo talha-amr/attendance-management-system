@@ -47,7 +47,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      "http://127.0.0.1:8000/teachers/me",
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/me`,
       {
         method: "GET",
         headers: {
@@ -87,7 +87,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      "http://127.0.0.1:8000/teachers/me/course-sections",
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/me/course-sections`,
       {
         method: "GET",
         headers: {
@@ -121,7 +121,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      "http://127.0.0.1:8000/teachers/timetables",
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/timetables`,
       {
         method: "GET",
         headers: {
@@ -155,8 +155,8 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const url = sectionId
-      ? `http://127.0.0.1:8000/teachers/attendance?section_id=${sectionId}`
-      : "http://127.0.0.1:8000/teachers/attendance";
+      ? `${process.env.NEXT_PUBLIC_API_URL}/teachers/attendance?section_id=${sectionId}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/teachers/attendance`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -190,7 +190,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      `http://127.0.0.1:8000/teachers/me/course-sections/${sectionId}/students`,
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/me/course-sections/${sectionId}/students`,
       {
         method: "GET",
         headers: {
@@ -224,7 +224,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      "http://127.0.0.1:8000/teachers/attendance",
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/attendance`,
       {
         method: "POST",
         headers: {
@@ -277,7 +277,7 @@ export function TeacherProvider({ children }) {
     if (!token) return;
 
     const response = await fetch(
-      `http://127.0.0.1:8000/teachers/attendance/${attendanceId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/teachers/attendance/${attendanceId}`,
       {
         method: "PATCH",
         headers: {

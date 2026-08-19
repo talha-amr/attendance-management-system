@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from .routers import user,auth,teacher,admin,student
 from .database import get_db
+from .config import settings
 from app.services.email_service import send_email
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,7 +13,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

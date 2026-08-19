@@ -31,7 +31,7 @@ export default function StudentEnroll() {
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8000/students/course-sections",
+        `${process.env.NEXT_PUBLIC_API_URL}/students/course-sections`,
         {
           method: "GET",
           headers: {

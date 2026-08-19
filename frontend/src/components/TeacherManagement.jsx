@@ -27,7 +27,7 @@ export default function TeacherManagement() {
         }
 
         const response = await fetch(
-          "http://127.0.0.1:8000/admin/teachers",
+          `${process.env.NEXT_PUBLIC_API_URL}/admin/teachers`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,7 +93,7 @@ export default function TeacherManagement() {
       }
 
       const response = await fetch(
-        `http://127.0.0.1:8000/admin/teachers/${teacherId}/${action}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/teachers/${teacherId}/${action}`,
         {
           method: "PATCH",
           headers: {

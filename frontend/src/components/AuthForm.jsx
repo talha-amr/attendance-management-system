@@ -77,7 +77,7 @@ export default function AuthForm() {
         loginData.append("password", formData.password);
 
         const response = await fetch(
-          "http://127.0.0.1:8000/auth/login",
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
           {
             method: "POST",
             headers: {
@@ -113,11 +113,11 @@ export default function AuthForm() {
         password: formData.password,
       };
 
-      let signupEndpoint = "http://127.0.0.1:8000/user";
+      let signupEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/user`;
 
       // Teacher signup uses the teacher-specific endpoint.
       if (signupRole === "teacher") {
-        signupEndpoint = "http://127.0.0.1:8000/teachers/signup";
+        signupEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/teachers/signup`;
       }
 
       const response = await fetch(signupEndpoint, {
