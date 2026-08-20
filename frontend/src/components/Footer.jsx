@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <span className="h-4 w-4 rounded-full bg-indigo-600" />
             <span className="text-xl font-bold tracking-tight text-slate-900">
-              School Attendance
+              CampusFlow
             </span>
           </div>
 
@@ -31,7 +31,7 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 md:flex-row">
           <p className="text-sm text-slate-400">
-            © {new Date().getFullYear()} Attendance Tracking System. All rights reserved.
+            © {new Date().getFullYear()} CampusFlow Academic Management Platform. All rights reserved.
           </p>
           <p className="text-sm font-medium text-slate-400">
             Built for modern educators.

@@ -178,7 +178,7 @@ export default function AuthForm() {
         <div className="hidden bg-gradient-to-br from-indigo-700 to-blue-500 p-12 text-white lg:flex lg:flex-col lg:justify-between">
           <div>
             <p className="text-sm font-semibold tracking-widest text-blue-100 uppercase">
-              School Attendance
+              CampusFlow
             </p>
 
             <h1 className="mt-5 text-4xl leading-tight font-bold">
@@ -192,7 +192,7 @@ export default function AuthForm() {
           </div>
 
           <p className="text-sm text-blue-100">
-            Attendance Tracking System
+            Academic management platform
           </p>
         </div>
 
