@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "School Attendance",
-  description: "School attendance management system",
+  title: "CampusFlow",
+  description: "CampusFlow academic management platform",
   icons: {
     icon: "/attendance.png",
     apple: "/attendance.png",

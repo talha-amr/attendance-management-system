@@ -6,10 +6,10 @@ export default function LandingPageNavbar() {
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
         <Link href="/" className="group">
           <h1 className="text-lg font-bold tracking-tight text-slate-900">
-            School <span className="text-indigo-600">Attendance</span>
+            Campus<span className="text-indigo-600">Flow</span>
           </h1>
           <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
-            Attendance Tracking System
+            Academic management platform
           </p>
         </Link>
 

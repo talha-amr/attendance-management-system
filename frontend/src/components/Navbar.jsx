@@ -43,11 +43,11 @@ export default function Navbar({ role }) {
         
         <Link href={`/${role}/dashboard`}>
           <h1 className="text-xl font-bold text-slate-900">
-            School Attendance
+            CampusFlow
           </h1>
 
           <p className="text-xs text-slate-500">
-            Attendance Tracking System
+            Academic management platform
           </p>
         </Link>
 

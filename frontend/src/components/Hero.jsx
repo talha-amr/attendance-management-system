@@ -12,7 +12,7 @@ export default function Hero() {
           <div className="mb-4 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#5B45FF]" />
             <p className="text-xs font-bold uppercase tracking-wider text-[#5B45FF]">
-              Attendance Tracking System
+              CampusFlow
             </p>
           </div>
 
