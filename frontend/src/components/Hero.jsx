@@ -18,7 +18,7 @@ export default function Hero() {
 
           {/* Main Headline */}
           <h1 className="text-5xl font-black leading-[1.1] text-slate-900 sm:text-6xl lg:text-[4.5rem]">
-            Your school.
+            Your Institution.
             <br />
             <span className="text-[#5B45FF]">One system.</span>
           </h1>
